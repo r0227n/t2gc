@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:app/domain/timetable/models/timetable_scan_result.dart';
-import 'package:app/domain/timetable/services/supported_timetable_parser.dart';
+import 'package:app/domain/models/timetable_scan_result.dart';
+import 'package:app/domain/services/supported_timetable_parser.dart';
 import 'package:core/core.dart' as core;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';

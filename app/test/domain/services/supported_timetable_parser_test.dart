@@ -1,5 +1,4 @@
-import 'package:app/domain/timetable/services/google_calendar_url_builder.dart';
-import 'package:app/domain/timetable/services/supported_timetable_parser.dart';
+import 'package:app/domain/services/supported_timetable_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
 
@@ -287,59 +286,6 @@ No. ライブ時間 出演者 物販枠 物販時間
       expect(last.performance.timeLabel, '19:25〜19:50');
       expect(last.merchandise?.boothLabelText, '終演後物販');
       expect(last.merchandise?.timeLabel, '21:10〜22:30');
-    });
-
-    test('builds Google Calendar URL with Asia/Tokyo timezone', () {
-      const result = NdlocrResult(
-        text: '''
-アイドル甲子園 in KANDA SQUARE HALL -DAY2-
-2026.03.21 [sat] OPEN 09:00 / START 09:15
-1 09:15~09:35 COLOR of COLOR
-''',
-        imageSize: NdlocrImageSize(width: 1368, height: 1782),
-        lines: <NdlocrLine>[
-          NdlocrLine(
-            order: 0,
-            text: '2026.03.21 [sat] OPEN 09:00 / START 09:15',
-            boundingBox: NdlocrBoundingBox(
-              x: 60,
-              y: 356,
-              width: 1200,
-              height: 72,
-            ),
-            type: 'line',
-            confidence: 0.99,
-            isVertical: false,
-          ),
-          NdlocrLine(
-            order: 1,
-            text: '1 09:15~09:35 COLOR of COLOR',
-            boundingBox: NdlocrBoundingBox(
-              x: 170,
-              y: 470,
-              width: 700,
-              height: 32,
-            ),
-            type: 'line',
-            confidence: 0.98,
-            isVertical: false,
-          ),
-        ],
-      );
-
-      final parsed = parser.parse(result);
-      final url = const GoogleCalendarUrlBuilder().buildUrl(
-        metadata: parsed.metadata,
-        slot: parsed.performances.single,
-      );
-
-      expect(url.host, 'calendar.google.com');
-      expect(url.queryParameters['ctz'], 'Asia/Tokyo');
-      expect(url.queryParameters['text'], 'COLOR of COLOR');
-      expect(
-        url.queryParameters['dates'],
-        '20260321T091500/20260321T093500',
-      );
     });
   });
 }

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:app/domain/timetable/models/timetable_scan_result.dart';
+import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
 
 /// Parser tuned to the first-launch timetable layout shown in the spec image.

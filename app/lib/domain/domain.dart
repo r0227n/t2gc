@@ -7,8 +7,5 @@
 /// - Usecases: Application use cases
 library;
 
-export 'timetable/models/timetable_scan_result.dart';
-export 'timetable/services/google_calendar_draft_builder.dart';
-export 'timetable/services/google_calendar_url_builder.dart';
-export 'timetable/services/supported_timetable_markdown_parser.dart';
-export 'timetable/services/supported_timetable_parser.dart';
+export 'models/timetable_scan_result.dart';
+export 'services/supported_timetable_parser.dart';
