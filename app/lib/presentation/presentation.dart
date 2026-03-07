@@ -5,4 +5,4 @@
 /// - Providers: UI state providers
 library;
 
-export 'pages/todo/todo_screen.dart';
+export 'pages/timetable/timetable_scan_screen.dart';

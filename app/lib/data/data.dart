@@ -6,6 +6,4 @@
 /// - Services: Service implementations
 library;
 
-export 'providers/category_provider.dart';
-export 'providers/database_provider.dart';
-export 'providers/todo_provider.dart';
+export 'fixtures/sample_timetable_markdown.dart';

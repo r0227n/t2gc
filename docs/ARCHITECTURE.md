@@ -50,7 +50,6 @@ dev_dependencies:
 workspace:
   - app
   - packages/core
-  - packages/database
 ```
 
 ### Melos スクリプト
@@ -183,53 +182,6 @@ dev_dependencies:
 
 ---
 
-## packages/database パッケージ
-
-### 責務
-
-- データベース接続管理（DuckDB）
-- データモデル定義
-- CRUD操作（Repository）
-- データアクセスProvider
-
-### 構成
-
-```
-database/
-├── lib/
-│   ├── database.dart       # Public API
-│   └── src/
-│       ├── service/        # DatabaseService
-│       ├── schema/         # スキーマ定義
-│       ├── todo/           # Todo機能
-│       │   ├── models/
-│       │   ├── repositories/
-│       │   └── providers/
-│       └── category/       # Category機能
-│           ├── models/
-│           ├── repositories/
-│           └── providers/
-```
-
-### 主要依存関係
-
-```yaml
-dependencies:
-  dart_duckdb: ^1.4.4
-  flutter_riverpod: ^3.0.3
-  freezed_annotation: ^3.1.0
-  path_provider: ^2.1.5
-  uuid: ^4.5.1
-
-dev_dependencies:
-  build_runner: ^2.7.1
-  freezed: ^3.2.3
-  riverpod_generator: ^3.0.3
-  yumemi_lints: ^4.3.0
-```
-
----
-
 ## app ディレクトリ
 
 ### 責務
@@ -267,8 +219,6 @@ app/lib/
 dependencies:
   core:
     path: ../packages/core
-  database:
-    path: ../packages/database
 ```
 
 ### 主要依存関係
@@ -278,8 +228,6 @@ dependencies:
   # パッケージ参照
   core:
     path: ../packages/core
-  database:
-    path: ../packages/database
 
   # UI/UX
   flutter_hooks: ^0.21.3
@@ -299,7 +247,6 @@ dependencies:
   freezed_annotation: ^3.1.0
   talker_flutter: ^5.0.2
   talker_riverpod_logger: ^5.0.2
-  uuid: ^4.5.1
 
 dev_dependencies:
   go_router_builder: ^4.0.0
@@ -319,7 +266,6 @@ dev_dependencies:
 | データモデル | Freezed 3.x    | イミュータブルモデル生成       |
 | 多言語対応   | Slang 4.x      | 型安全な翻訳                   |
 | ロギング     | Talker 5.x     | 構造化ログ                     |
-| データベース | DuckDB         | 組み込みOLAPデータベース       |
 | リント       | yumemi_lints   | コード品質管理                 |
 | 開発環境     | mise           | ツールバージョン管理           |
 
@@ -367,7 +313,6 @@ melos run gen:slang
    workspace:
      - app
      - packages/core
-     - packages/database
      - packages/[name] # 追加
    ```
 

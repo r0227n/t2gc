@@ -3,8 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  dart_duckdb
+  file_selector_windows
   firebase_core
+  flutter_onnxruntime
   share_plus
   url_launcher_windows
 )
