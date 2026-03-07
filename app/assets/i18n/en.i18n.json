@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "version": "Version",
+    "licenses": "Licenses",
+    "sections": {
+      "appSettings": "App Settings",
+      "other": "Other"
+    }
+  }
+}
