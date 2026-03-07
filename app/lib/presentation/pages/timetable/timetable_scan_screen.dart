@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:app/data/fixtures/sample_timetable_markdown.dart';
 import 'package:app/domain/timetable/models/timetable_scan_result.dart';
-import 'package:app/domain/timetable/services/google_calendar_draft_builder.dart';
-import 'package:app/domain/timetable/services/supported_timetable_markdown_parser.dart';
 import 'package:app/domain/timetable/services/supported_timetable_parser.dart';
 import 'package:core/core.dart' as core;
 import 'package:flutter/material.dart';
@@ -24,51 +21,21 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
   static const _supportedFormatLabel = 'アイドル甲子園 / KANDA SQUARE HALL 形式';
 
   final ImagePicker _picker = ImagePicker();
-  final SupportedTimetableMarkdownParser _markdownParser =
-      const SupportedTimetableMarkdownParser();
   final SupportedTimetableParser _ocrParser = const SupportedTimetableParser();
-  final GoogleCalendarDraftBuilder _calendarDraftBuilder =
-      const GoogleCalendarDraftBuilder();
 
   NdlocrLite? _ocr;
   Uint8List? _imageBytes;
   String _imageName = '';
-  String _statusMessage = '理想サンプルを読み込んでいます...';
+  String _statusMessage = '画像を選んで OCR 取込を開始してください。';
   bool _isBusy = false;
   NdlocrResult? _ocrResult;
   TimetableScanResult? _scanResult;
   Set<int> _selectedSlots = <int>{};
 
   @override
-  void initState() {
-    super.initState();
-    _loadBundledTimetable();
-  }
-
-  @override
   void dispose() {
     unawaited(_ocr?.dispose());
     super.dispose();
-  }
-
-  void _loadBundledTimetable() {
-    final scanResult = _markdownParser.parse(sampleTimetableMarkdown);
-    _scanResult = scanResult;
-    _selectedSlots = scanResult.performances
-        .map((slot) => slot.slotNumber)
-        .toSet();
-    _statusMessage =
-        '理想サンプルとして '
-        '${scanResult.performances.length} 組のライブと'
-        ' ${scanResult.merchandiseSlots.length} 件の物販を表示しています。';
-  }
-
-  Future<void> _reloadBundledTimetable() async {
-    if (!mounted) {
-      return;
-    }
-
-    setState(_loadBundledTimetable);
   }
 
   Future<void> _pickImageAndInspectOcr() async {
@@ -164,24 +131,6 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final result = _scanResult;
-    final selectedSchedules =
-        result == null
-              ? const <TimetableArtistSchedule>[]
-              : result.schedules
-                    .where(
-                      (schedule) =>
-                          _selectedSlots.contains(schedule.slotNumber),
-                    )
-                    .toList()
-          ..sort(
-            (left, right) => left.slotNumber.compareTo(right.slotNumber),
-          );
-    final calendarEntries = result == null
-        ? const <TimetableCalendarEntry>[]
-        : _calendarDraftBuilder.buildEntries(
-            metadata: result.metadata,
-            schedules: selectedSchedules,
-          );
 
     return Scaffold(
       body: DecoratedBox(
@@ -208,7 +157,6 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
                 const SizedBox(height: 20),
                 _ActionCard(
                   isBusy: _isBusy,
-                  onReloadBundledTimetable: _reloadBundledTimetable,
                   onInspectOcr: _pickImageAndInspectOcr,
                 ),
                 const SizedBox(height: 20),
@@ -218,11 +166,6 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
                 imageBytes: _imageBytes,
                 imageName: _imageName,
               );
-              final summary = _ScanSummaryCard(
-                scanResult: result,
-                selectedSlots: _selectedSlots,
-                calendarEntryCount: calendarEntries.length,
-              );
 
               if (isWide) {
                 content.add(
@@ -230,22 +173,14 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: preview),
-                      const SizedBox(width: 20),
-                      Expanded(child: summary),
                     ],
                   ),
                 );
               } else {
-                content.addAll(<Widget>[
-                  preview,
-                  const SizedBox(height: 20),
-                  summary,
-                ]);
+                content.add(preview);
               }
 
               content.addAll([
-                const SizedBox(height: 20),
-                _CalendarPreviewCard(calendarEntries: calendarEntries),
                 const SizedBox(height: 20),
                 _PerformanceListCard(
                   scanResult: result,
@@ -345,8 +280,8 @@ class _HeroCard extends StatelessWidget {
             Text(
               <String>[
                 '初回版は添付画像フォーマット専用です。',
-                'OCR 結果を `SAMPLE_TIMETABLE.md` の理想形へ寄せて表示し、',
-                'Google Calendar 連携は UI プレビューまでを提供します。',
+                '画像から OCR を実行して抽出結果を表示し、',
+                '出演者ごとにライブと物販の予定を確認できます。',
               ].join(' '),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.92),
@@ -392,12 +327,10 @@ class _HeroCard extends StatelessWidget {
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
     required this.isBusy,
-    required this.onReloadBundledTimetable,
     required this.onInspectOcr,
   });
 
   final bool isBusy;
-  final Future<void> Function() onReloadBundledTimetable;
   final Future<void> Function() onInspectOcr;
 
   @override
@@ -412,21 +345,13 @@ class _ActionCard extends StatelessWidget {
           runSpacing: 12,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            FilledButton.icon(
-              key: const ValueKey('reload-bundled-timetable'),
-              onPressed: isBusy ? null : onReloadBundledTimetable,
-              icon: const Icon(Icons.table_view_outlined),
-              label: const Text('理想サンプルを再読込'),
-            ),
             FilledButton.tonalIcon(
               onPressed: isBusy ? null : onInspectOcr,
               icon: const Icon(Icons.photo_library_outlined),
               label: Text(isBusy ? 'OCR 解析中...' : '画像を選んで OCR 取込'),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'OCR 結果を表示に反映します。比較用に理想サンプルへ戻すこともできます。',
-            ),
+            const Text('対応画像を選ぶと OCR 結果を表示に反映します。'),
           ],
         ),
       ),
@@ -497,223 +422,6 @@ class _PreviewCard extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ScanSummaryCard extends StatelessWidget {
-  const _ScanSummaryCard({
-    required this.scanResult,
-    required this.selectedSlots,
-    required this.calendarEntryCount,
-  });
-
-  final TimetableScanResult? scanResult;
-  final Set<int> selectedSlots;
-  final int calendarEntryCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final result = scanResult;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: result == null
-            ? const Text('解析結果はまだありません。')
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '抽出サマリー',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  _MetricRow(label: 'イベント', value: result.metadata.eventTitle),
-                  _MetricRow(label: '会場', value: result.metadata.venueName),
-                  _MetricRow(
-                    label: '開催日',
-                    value: result.metadata.eventDateLabel,
-                  ),
-                  if (result.metadata.openTimeLabel case final openTime?)
-                    _MetricRow(label: 'OPEN', value: openTime),
-                  if (result.metadata.startTimeLabel case final startTime?)
-                    _MetricRow(label: 'START', value: startTime),
-                  if (result.metadata.afterShowMerchandiseTimeLabel
-                      case final afterShowTime?)
-                    _MetricRow(label: '終演後物販', value: afterShowTime),
-                  _MetricRow(
-                    label: 'ライブ枠',
-                    value: '${result.performances.length} 件',
-                  ),
-                  _MetricRow(
-                    label: '物販枠',
-                    value: '${result.merchandiseSlots.length} 件',
-                  ),
-                  _MetricRow(
-                    label: '選択中',
-                    value: '${selectedSlots.length} 組',
-                  ),
-                  _MetricRow(
-                    label: '下書き予定',
-                    value: '$calendarEntryCount 件',
-                  ),
-                  if (result.warnings.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    for (final warning in result.warnings)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          '注意: $warning',
-                          style: const TextStyle(color: Color(0xFF8A4B00)),
-                        ),
-                      ),
-                  ],
-                  const SizedBox(height: 12),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7EEF9),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.all(14),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.info_outline),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Google Calendar への実際の転記は初回版では行いません。 '
-                              'この画面では登録予定の内容を確認できます。',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _MetricRow extends StatelessWidget {
-  const _MetricRow({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 96,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CalendarPreviewCard extends StatelessWidget {
-  const _CalendarPreviewCard({
-    required this.calendarEntries,
-  });
-
-  final List<TimetableCalendarEntry> calendarEntries;
-
-  @override
-  Widget build(BuildContext context) {
-    final previewEntries = calendarEntries.take(8).toList();
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Google Calendar プレビュー',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              calendarEntries.isEmpty
-                  ? '出演者を選ぶと、ここに登録予定のイベントを表示します。'
-                  : '${calendarEntries.length} 件のイベントを作成予定です。',
-            ),
-            if (previewEntries.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              for (final entry in previewEntries)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${entry.typeLabel} • ${entry.timeLabel}',
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            entry.location,
-                            style: const TextStyle(color: Color(0xFF54606E)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              if (calendarEntries.length > previewEntries.length)
-                Text(
-                  'ほか ${calendarEntries.length - previewEntries.length} 件',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-            ],
           ],
         ),
       ),
