@@ -277,15 +277,26 @@ No. ライブ時間 出演者 物販枠 物販時間
       expect(parsed.merchandiseSlots, hasLength(2));
       expect(parsed.metadata.eventTitle, 'アイドル甲子園 in KANDA SQUARE HALL -DAY2-');
       expect(parsed.metadata.venueName, 'KANDA SQUARE HALL');
-      expect(parsed.metadata.afterShowMerchandiseTimeLabel, '21:10〜22:30');
+      expect(
+        parsed.metadata.afterShowMerchandiseStartAt,
+        DateTime(2026, 3, 21, 21, 10),
+      );
+      expect(
+        parsed.metadata.afterShowMerchandiseEndAt,
+        DateTime(2026, 3, 21, 22, 30),
+      );
       expect(first.artistName, 'COLOR of COLOR');
-      expect(first.performance.timeLabel, '09:15〜09:35');
-      expect(first.merchandise?.boothLabelText, '物販 A');
-      expect(first.merchandise?.timeLabel, '09:50〜11:10');
+      expect(first.performance.startAt, DateTime(2026, 3, 21, 9, 15));
+      expect(first.performance.endAt, DateTime(2026, 3, 21, 9, 35));
+      expect(first.merchandise?.boothLabel, 'A');
+      expect(first.merchandise?.startAt, DateTime(2026, 3, 21, 9, 50));
+      expect(first.merchandise?.endAt, DateTime(2026, 3, 21, 11, 10));
       expect(last.artistName, 'Merry BAD TUNE.');
-      expect(last.performance.timeLabel, '19:25〜19:50');
-      expect(last.merchandise?.boothLabelText, '終演後物販');
-      expect(last.merchandise?.timeLabel, '21:10〜22:30');
+      expect(last.performance.startAt, DateTime(2026, 3, 21, 19, 25));
+      expect(last.performance.endAt, DateTime(2026, 3, 21, 19, 50));
+      expect(last.merchandise?.isAfterShow, isTrue);
+      expect(last.merchandise?.startAt, DateTime(2026, 3, 21, 21, 10));
+      expect(last.merchandise?.endAt, DateTime(2026, 3, 21, 22, 30));
     });
   });
 }

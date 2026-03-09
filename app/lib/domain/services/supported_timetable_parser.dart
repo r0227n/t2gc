@@ -1,7 +1,20 @@
 import 'dart:math' as math;
 
+import 'package:app/domain/models/timetable_artist_schedule.dart';
+import 'package:app/domain/models/timetable_merchandise_slot.dart';
+import 'package:app/domain/models/timetable_metadata.dart';
+import 'package:app/domain/models/timetable_performance_slot.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'supported_timetable_parser.g.dart';
+
+/// Provides the parser tuned to the supported timetable layout.
+@Riverpod(keepAlive: true)
+SupportedTimetableParser supportedTimetableParser(Ref ref) {
+  return const SupportedTimetableParser();
+}
 
 /// Parser tuned to the first-launch timetable layout shown in the spec image.
 class SupportedTimetableParser {
@@ -460,7 +473,8 @@ class SupportedTimetableParser {
       final performance = row.performance;
       final key =
           '${performance.slotNumber}-${performance.artistName}'
-          '-${performance.timeLabel}';
+          '-${performance.startAt.toIso8601String()}'
+          '-${performance.endAt.toIso8601String()}';
       final existing = deduplicated[key];
       if (existing == null ||
           (existing.merchandise == null && row.merchandise != null)) {

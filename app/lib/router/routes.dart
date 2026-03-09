@@ -1,4 +1,4 @@
-import 'package:app/presentation/pages/timetable/timetable_scan_screen.dart';
+import 'package:app/presentation/pages/timetable_scan_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

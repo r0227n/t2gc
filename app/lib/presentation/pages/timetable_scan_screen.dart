@@ -1,136 +1,25 @@
-import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
-import 'package:app/domain/services/supported_timetable_parser.dart';
-import 'package:core/core.dart' as core;
+import 'package:app/presentation/controllers/timetable_scan_controller.dart';
+import 'package:app/presentation/helpers/timetable_formatters.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Home screen for the first-launch timetable import experience.
-class TimetableScanScreen extends StatefulWidget {
+class TimetableScanScreen extends ConsumerWidget {
   /// Creates the timetable scan screen.
   const TimetableScanScreen({super.key});
 
-  @override
-  State<TimetableScanScreen> createState() => _TimetableScanScreenState();
-}
-
-class _TimetableScanScreenState extends State<TimetableScanScreen> {
   static const _supportedFormatLabel = 'アイドル甲子園 / KANDA SQUARE HALL 形式';
 
-  final ImagePicker _picker = ImagePicker();
-  final SupportedTimetableParser _ocrParser = const SupportedTimetableParser();
-
-  NdlocrLite? _ocr;
-  Uint8List? _imageBytes;
-  String _imageName = '';
-  String _statusMessage = '画像を選んで OCR 取込を開始してください。';
-  bool _isBusy = false;
-  NdlocrResult? _ocrResult;
-  TimetableScanResult? _scanResult;
-  Set<int> _selectedSlots = <int>{};
-
   @override
-  void dispose() {
-    unawaited(_ocr?.dispose());
-    super.dispose();
-  }
-
-  Future<void> _pickImageAndInspectOcr() async {
-    final file = await _picker.pickImage(source: ImageSource.gallery);
-    if (file == null) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _statusMessage = '画像選択がキャンセルされました。';
-      });
-      return;
-    }
-
-    final bytes = await file.readAsBytes();
-    setState(() {
-      _isBusy = true;
-      _statusMessage = 'OCR を実行してタイムテーブルを解析しています...';
-    });
-
-    try {
-      _ocr ??= await NdlocrLite.create();
-      final ocrResult = await _ocr!.recognizeImageBytes(
-        bytes,
-        imageName: file.name,
-        options: const NdlocrOptions(includeJson: true),
-      );
-      final parsedOcr = _ocrParser.parse(ocrResult);
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _imageBytes = bytes;
-        _imageName = file.name;
-        _ocrResult = ocrResult;
-        _scanResult = parsedOcr;
-        _selectedSlots = parsedOcr.performances
-            .map((slot) => slot.slotNumber)
-            .toSet();
-        _statusMessage =
-            'OCR から ${parsedOcr.performances.length} 組のライブと '
-            '${parsedOcr.merchandiseSlots.length} 件の物販を抽出しました。';
-      });
-    } on Object catch (error, stackTrace) {
-      _logOcrFailure(
-        imageName: file.name,
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _statusMessage = 'OCR に失敗しました: $error';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isBusy = false;
-        });
-      }
-    }
-  }
-
-  void _logOcrFailure({
-    required String imageName,
-    required Object error,
-    required StackTrace stackTrace,
-  }) {
-    final message = 'OCR inspection failed for image "$imageName"';
-
-    if (core.AppLogger.isInitialized) {
-      core.AppLogger.instance.error(message, error, stackTrace);
-      return;
-    }
-
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'app.timetable_scan',
-        context: ErrorDescription(message),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final result = _scanResult;
+    final scanState = ref.watch(timetableScanControllerProvider);
+    final notifier = ref.read(timetableScanControllerProvider.notifier);
+    final result = scanState.scanResult;
 
     return Scaffold(
       body: DecoratedBox(
@@ -151,20 +40,20 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
               final isWide = constraints.maxWidth >= 1040;
               final content = <Widget>[
                 _HeroCard(
-                  statusMessage: _statusMessage,
+                  statusMessage: scanState.statusMessage,
                   supportedFormatLabel: _supportedFormatLabel,
                 ),
                 const SizedBox(height: 20),
                 _ActionCard(
-                  isBusy: _isBusy,
-                  onInspectOcr: _pickImageAndInspectOcr,
+                  isBusy: scanState.isBusy,
+                  onInspectOcr: notifier.inspectFromGallery,
                 ),
                 const SizedBox(height: 20),
               ];
 
               final preview = _PreviewCard(
-                imageBytes: _imageBytes,
-                imageName: _imageName,
+                imageBytes: scanState.imageBytes,
+                imageName: scanState.imageName,
               );
 
               if (isWide) {
@@ -184,23 +73,20 @@ class _TimetableScanScreenState extends State<TimetableScanScreen> {
                 const SizedBox(height: 20),
                 _PerformanceListCard(
                   scanResult: result,
-                  selectedSlots: _selectedSlots,
+                  selectedSlots: scanState.selectedSlots,
                   onToggleSlot: (slotNumber, {required isSelected}) {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedSlots.add(slotNumber);
-                      } else {
-                        _selectedSlots.remove(slotNumber);
-                      }
-                    });
+                    notifier.setSlotSelected(
+                      slotNumber: slotNumber,
+                      isSelected: isSelected,
+                    );
                   },
                 ),
               ]);
 
-              if (_ocrResult case final ocrResult?) {
+              if (scanState.scanResult?.rawText case final rawText?) {
                 content.addAll(<Widget>[
                   const SizedBox(height: 20),
-                  _OcrDebugCard(rawText: ocrResult.text),
+                  _OcrDebugCard(rawText: rawText),
                 ]);
               }
 
