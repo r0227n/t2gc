@@ -4,6 +4,10 @@
 // future. If not, the values below would default to using the project name when this becomes a
 // 'flutter create' template.
 
+APP_NAME = t2gc
+APP_ID = com.example.t2gc
+APP_ID_SUFFIX =
+
 // The application's name. By default this is also the title of the Flutter window.
 PRODUCT_NAME = $(APP_NAME)
 

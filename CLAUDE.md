@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-Melos モノレポ構成の Flutter テンプレートプロジェクト。Riverpod + go_router + Slang (i18n) + DuckDB をコアスタックとする。
+Melos モノレポ構成の Flutter テンプレートプロジェクト。Riverpod + go_router + Slang (i18n) をコアスタックとする。
 
 ## ワークスペース構成
 
@@ -12,11 +12,10 @@ Melos モノレポ構成の Flutter テンプレートプロジェクト。River
 workspace (root pubspec.yaml)
 ├── app/              # メインFlutterアプリ（エントリーポイント）
 ├── packages/core/    # ロギング(Talker)、設定(SharedPreferences)、多言語基盤(Slang)
-├── packages/database/ # DuckDB データ永続化、Todo/Category CRUD
 └── packages/design_system/ # テーマ・デザイントークン
 ```
 
-依存方向: `app` → `packages/*` の一方向のみ。core と database 間に依存関係なし。
+依存方向: `app` → `packages/*` の一方向のみ。
 各パッケージは `resolution: workspace` でワークスペース統一解決。
 
 ## アーキテクチャ
@@ -44,4 +43,3 @@ app/lib/
 
 - When launching subagents via the Task tool, always set `run_in_background: true` to run them in the background by default
 - Use TaskOutput to retrieve results when needed
-

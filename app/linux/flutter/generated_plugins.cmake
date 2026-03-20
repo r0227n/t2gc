@@ -3,7 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  dart_duckdb
+  file_selector_linux
+  flutter_onnxruntime
   url_launcher_linux
 )
 
