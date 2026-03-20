@@ -26,7 +26,9 @@ abstract class TimetableScanState with _$TimetableScanState {
     @Default(false) bool isBusy,
     TimetableScanResult? scanResult,
 
-    /// Indices into [scanResult!.schedules] for selected rows (each checkbox independent).
+    /// Indices into [scanResult!.schedules] for selected rows.
+    ///
+    /// Each checkbox is independent.
     @Default(<int>{}) Set<int> selectedSlotIndices,
   }) = _TimetableScanState;
 
@@ -43,6 +45,7 @@ abstract class TimetableScanState with _$TimetableScanState {
 class TimetableScanController extends _$TimetableScanController {
   var _isDisposed = false;
   var _bootstrappedQueryScenario = false;
+  var _activeInspectionId = 0;
 
   @override
   TimetableScanState build() {
@@ -88,10 +91,16 @@ class TimetableScanController extends _$TimetableScanController {
       return;
     }
 
+    final inspectionId = ++_activeInspectionId;
+
     state = state.copyWith(
+      imageBytes: image.bytes,
+      imageName: image.name,
       isBusy: true,
       previewDescription: '',
       showAttachedSamplePreview: false,
+      scanResult: null,
+      selectedSlotIndices: const <int>{},
       statusMessage: 'Running OCR and parsing the timetable…',
     );
 
@@ -100,7 +109,7 @@ class TimetableScanController extends _$TimetableScanController {
           .read(scanTimetableImageUseCaseProvider)
           .call(imageBytes: image.bytes, imageName: image.name);
 
-      if (_isDisposed) {
+      if (_isDisposed || inspectionId != _activeInspectionId) {
         return;
       }
 
@@ -108,8 +117,6 @@ class TimetableScanController extends _$TimetableScanController {
         for (var i = 0; i < result.schedules.length; i++) i,
       };
       state = state.copyWith(
-        imageBytes: image.bytes,
-        imageName: image.name,
         previewDescription: '',
         showAttachedSamplePreview: false,
         scanResult: result,
@@ -123,16 +130,22 @@ class TimetableScanController extends _$TimetableScanController {
         stackTrace: stackTrace,
       );
 
-      if (_isDisposed) {
+      if (_isDisposed || inspectionId != _activeInspectionId) {
         return;
       }
 
       state = state.copyWith(statusMessage: 'OCR failed: $error');
     } finally {
-      if (!_isDisposed) {
+      if (!_isDisposed && inspectionId == _activeInspectionId) {
         state = state.copyWith(isBusy: false);
       }
     }
+  }
+
+  /// Cancels the current OCR flow and clears the selected image and result.
+  void clearSelection() {
+    _activeInspectionId++;
+    state = const TimetableScanState();
   }
 
   /// Loads the deterministic attached timetable sample.
@@ -189,7 +202,9 @@ class TimetableScanController extends _$TimetableScanController {
     }
   }
 
-  /// Updates whether the schedule at [index] is selected (each row independent).
+  /// Updates whether the schedule at [index] is selected.
+  ///
+  /// Each row checkbox is independent.
   void setSlotSelected({
     required int index,
     required bool isSelected,

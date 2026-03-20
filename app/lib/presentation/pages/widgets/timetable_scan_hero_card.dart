@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -6,23 +8,35 @@ class TimetableScanHeroCard extends StatelessWidget {
   /// Creates the hero / dropzone card.
   const TimetableScanHeroCard({
     required this.statusMessage,
-    required this.supportedFormatLabel,
     required this.isBusy,
     required this.onInspectOcr,
+    required this.imageBytes,
+    required this.imageName,
+    required this.eventCount,
+    required this.onClearImage,
     super.key,
   });
 
   /// Current OCR/import status.
   final String statusMessage;
 
-  /// Supported timetable format label.
-  final String supportedFormatLabel;
-
   /// Whether OCR processing is running.
   final bool isBusy;
 
   /// Starts OCR from a gallery image.
   final Future<void> Function() onInspectOcr;
+
+  /// Raw image bytes for the selected timetable.
+  final Uint8List? imageBytes;
+
+  /// File name for the selected timetable image.
+  final String imageName;
+
+  /// Number of parsed events when OCR has completed.
+  final int? eventCount;
+
+  /// Clears the selected image and any OCR result.
+  final VoidCallback onClearImage;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +49,7 @@ class TimetableScanHeroCard extends StatelessWidget {
     final innerRadius = BorderRadius.circular(
       TimetableScanStitchTokens.radiusInset,
     );
+    final hasImage = imageBytes != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -60,44 +75,91 @@ class TimetableScanHeroCard extends StatelessWidget {
                   horizontal: spacing.l,
                 ),
                 child: Column(
+                  spacing: spacing.l,
                   children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: scheme.primaryContainer.withValues(
-                          alpha: 0.2,
+                    if (hasImage) ...[
+                      ClipRRect(
+                        borderRadius: innerRadius,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 360),
+                          child: ColoredBox(
+                            color: scheme.surfaceContainerHigh,
+                            child: Padding(
+                              padding: EdgeInsets.all(spacing.s),
+                              child: Image.memory(
+                                imageBytes!,
+                                key: const ValueKey(
+                                  'timetable-scan-hero-selected-image',
+                                ),
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Icon(
-                          Icons.cloud_upload_rounded,
-                          size: 40,
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.image_rounded,
                           color: scheme.primary,
                         ),
+                        title: Text(
+                          imageName.isEmpty
+                              ? 'Selected image preview'
+                              : imageName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${eventCount ?? 0} event${eventCount == 1 ? '' : 's'} detected.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          key: const ValueKey(
+                            'timetable-scan-hero-clear-image-button',
+                          ),
+                          tooltip: 'Clear selected image',
+                          onPressed: onClearImage,
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: spacing.m),
-                    Text(
-                      'Drop your timetable here',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.25,
-                        color: scheme.onSurface,
+                    ] else ...[
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: scheme.primaryContainer.withValues(
+                            alpha: 0.2,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Icon(
+                            Icons.cloud_upload_rounded,
+                            size: 40,
+                            color: scheme.primary,
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: spacing.s),
-                    Text(
-                      'JPG, PNG, or PDF — we extract slots for your '
-                      'calendar ($supportedFormatLabel on first import).',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        height: 1.45,
+                      Text(
+                        'Drop your timetable image here',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.25,
+                          color: scheme.onSurface,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: spacing.l),
+                    ],
                     Wrap(
                       alignment: WrapAlignment.center,
                       spacing: spacing.m,
@@ -127,12 +189,12 @@ class TimetableScanHeroCard extends StatelessWidget {
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
+                                  spacing: spacing.s,
                                   children: [
                                     Icon(
                                       Icons.folder_open_rounded,
                                       color: scheme.onPrimary,
                                     ),
-                                    const SizedBox(width: 10),
                                     Text(
                                       isBusy ? 'Analyzing…' : 'Browse Files',
                                       style: theme.textTheme.titleSmall

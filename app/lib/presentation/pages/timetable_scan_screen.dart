@@ -1,7 +1,6 @@
 import 'package:app/presentation/controllers/timetable_scan_controller.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_hero_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_ocr_debug_card.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_original_image_panel.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_performance_list_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_shell.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
@@ -13,9 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class TimetableScanScreen extends ConsumerWidget {
   /// Creates the timetable scan screen.
   const TimetableScanScreen({super.key});
-
-  static const _supportedFormatLabel =
-      'Idol Koushien / KANDA SQUARE HALL format';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,79 +29,17 @@ class TimetableScanScreen extends ConsumerWidget {
         warnings: result?.warnings ?? const <String>[],
       ),
       if (parsedResult != null && parsedResult.hasPerformances)
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth >= 900;
-            final imagePanel = TimetableScanOriginalImagePanel(
-              imageBytes: scanState.imageBytes,
-              eventCount: parsedResult.schedules.length,
-            );
-            final listCard = TimetableScanPerformanceListCard(
-              scanResult: parsedResult,
-              selectedSlotIndices: scanState.selectedSlotIndices,
-              onToggleSlot: (index, {required isSelected}) {
-                notifier.setSlotSelected(
-                  index: index,
-                  isSelected: isSelected,
-                );
-              },
-              onSelectAllSlots: notifier.selectAllSlots,
-              onClearAllSlots: notifier.clearAllSlots,
-            );
-            if (isMobile) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: spacing.l,
-                children: [
-                  Expanded(flex: 4, child: imagePanel),
-                  Expanded(flex: 8, child: listCard),
-                ],
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: spacing.l,
-              children: [
-                Material(
-                  color: stitchTheme.colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(
-                    TimetableScanStitchTokens.radiusLg,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Theme(
-                    data: stitchTheme.copyWith(
-                      dividerColor: Colors.transparent,
-                    ),
-                    child: ExpansionTile(
-                      leading: Icon(
-                        Icons.image_outlined,
-                        color: stitchTheme.colorScheme.primary,
-                      ),
-                      title: Text(
-                        'View Original Image',
-                        style: stitchTheme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: stitchTheme.colorScheme.onSurface,
-                        ),
-                      ),
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            spacing.m,
-                            0,
-                            spacing.m,
-                            spacing.m,
-                          ),
-                          child: imagePanel,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                listCard,
-              ],
+        TimetableScanPerformanceListCard(
+          scanResult: parsedResult,
+          selectedSlotIndices: scanState.selectedSlotIndices,
+          onToggleSlot: (index, {required isSelected}) {
+            notifier.setSlotSelected(
+              index: index,
+              isSelected: isSelected,
             );
           },
+          onSelectAllSlots: notifier.selectAllSlots,
+          onClearAllSlots: notifier.clearAllSlots,
         )
       else
         TimetableScanPerformanceListCard(
@@ -151,24 +85,22 @@ class TimetableScanScreen extends ConsumerWidget {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 1040),
-                      child: isMobile
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: spacing.l,
-                              children: [
-                                TimetableScanHeroCard(
-                                  statusMessage: scanState.statusMessage,
-                                  supportedFormatLabel: _supportedFormatLabel,
-                                  isBusy: scanState.isBusy,
-                                  onInspectOcr: notifier.inspectFromGallery,
-                                ),
-                                ...resultsSection,
-                              ],
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: resultsSection,
-                            ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: spacing.l,
+                        children: [
+                          TimetableScanHeroCard(
+                            statusMessage: scanState.statusMessage,
+                            isBusy: scanState.isBusy,
+                            onInspectOcr: notifier.inspectFromGallery,
+                            onClearImage: notifier.clearSelection,
+                            imageBytes: scanState.imageBytes,
+                            imageName: scanState.imageName,
+                            eventCount: parsedResult?.schedules.length,
+                          ),
+                          ...resultsSection,
+                        ],
+                      ),
                     ),
                   ),
                 );
