@@ -1,3 +1,4 @@
+import 'package:app/core/gen/slang.g.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -41,7 +42,7 @@ class TimetableScanWarningsCard extends StatelessWidget {
                 SizedBox(width: spacing.s),
                 Expanded(
                   child: Text(
-                    'Needs review',
+                    t.timetableScan.warnings.needsReview,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: scheme.onSurface,
                       fontWeight: FontWeight.w800,

@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:app/core/gen/slang.g.dart';
 import 'package:flutter/material.dart';
 
 /// Stitch layout: sticky top bar, optional fixed side nav, decorative blurs.
@@ -121,7 +122,7 @@ class _TopBar extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'Timetable To Google Calendar',
+                t.app.shellTitle,
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
@@ -131,7 +132,7 @@ class _TopBar extends StatelessWidget {
               ),
               const Spacer(),
               IconButton(
-                tooltip: 'Settings',
+                tooltip: t.app.settingsTooltip,
                 onPressed: () {},
                 icon: Icon(Icons.settings_outlined, color: scheme.primary),
               ),

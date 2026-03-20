@@ -12,6 +12,7 @@ targets:
           flutter_integration: true
           namespaces: false
           translate_var_names: true
+          string_interpolation: braces
           flat_map: false
           stats: true
           format:

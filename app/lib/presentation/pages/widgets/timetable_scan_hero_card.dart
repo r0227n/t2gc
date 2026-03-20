@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:app/core/gen/slang.g.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -106,7 +107,7 @@ class TimetableScanHeroCard extends StatelessWidget {
                         ),
                         title: Text(
                           imageName.isEmpty
-                              ? 'Selected image preview'
+                              ? t.timetableScan.hero.selectedImagePreview
                               : imageName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -116,7 +117,11 @@ class TimetableScanHeroCard extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          '${eventCount ?? 0} event${eventCount == 1 ? '' : 's'} detected.',
+                          eventCount == 1
+                              ? t.timetableScan.hero.selectedOne
+                              : t.timetableScan.hero.selectedMany(
+                                  count: eventCount ?? 0,
+                                ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -125,7 +130,8 @@ class TimetableScanHeroCard extends StatelessWidget {
                           key: const ValueKey(
                             'timetable-scan-hero-clear-image-button',
                           ),
-                          tooltip: 'Clear selected image',
+                          tooltip:
+                              t.timetableScan.hero.clearSelectedImageTooltip,
                           onPressed: onClearImage,
                           icon: Icon(
                             Icons.close_rounded,
@@ -151,7 +157,7 @@ class TimetableScanHeroCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Drop your timetable image here',
+                        t.timetableScan.hero.dropTimetableImageHere,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
@@ -196,7 +202,9 @@ class TimetableScanHeroCard extends StatelessWidget {
                                       color: scheme.onPrimary,
                                     ),
                                     Text(
-                                      isBusy ? 'Analyzing…' : 'Browse Files',
+                                      isBusy
+                                          ? t.timetableScan.hero.analyzing
+                                          : t.timetableScan.hero.browseFiles,
                                       style: theme.textTheme.titleSmall
                                           ?.copyWith(
                                             color: scheme.onPrimary,

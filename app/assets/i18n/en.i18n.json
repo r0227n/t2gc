@@ -1,4 +1,9 @@
 {
+  "app": {
+    "title": "Timetable OCR",
+    "shellTitle": "Timetable to Google Calendar",
+    "settingsTooltip": "Settings"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
@@ -8,6 +13,66 @@
     "sections": {
       "appSettings": "App Settings",
       "other": "Other"
+    }
+  },
+  "timetableScan": {
+    "warnings": {
+      "needsReview": "Needs review"
+    },
+    "performanceList": {
+      "emptyState": "Detected events will appear here once a timetable is scanned.",
+      "heading": "EVENT DETAILS",
+      "selectAll": "Select all",
+      "slotLabel": "SLOT {slotNumber}",
+      "liveTime": "Live Time",
+      "merchEventTime": "Merch/Event Time",
+      "notAvailable": "N/A",
+      "editDetails": "Edit Details",
+      "editingComingSoon": "Editing is coming soon.",
+      "selectedOne": "1 Event Selected",
+      "selectedMany": "{count} Events Selected",
+      "addingToCalendar": "Adding to \"Summer Festival 2024\" calendar",
+      "addSelectedToGoogleCalendar": "Add selected to Google Calendar",
+      "calendarIntegrationComingSoon": "Google Calendar integration ships in a later release."
+    },
+    "hero": {
+      "selectedImagePreview": "Selected image preview",
+      "clearSelectedImageTooltip": "Clear selected image",
+      "dropTimetableImageHere": "Drop your timetable image here",
+      "analyzing": "Analyzing…",
+      "browseFiles": "Browse Files",
+      "selectedOne": "1 event detected.",
+      "selectedMany": "{count} events detected."
+    },
+    "ocrDebug": {
+      "title": "OCR debug text",
+      "subtitle": "Raw text before parsing"
+    },
+    "status": {
+      "chooseImage": "Choose an image to start OCR extraction.",
+      "runningOcr": "Running OCR and parsing the timetable…",
+      "loadingScenario": "Loading validation scenario…",
+      "selectionCanceled": "Image selection was canceled.",
+      "noSupportedRows": "No supported timetable rows were detected.",
+      "extractedCounts": "Extracted {liveCount} live set(s) and {merchCount} merchandise slot(s) from OCR.",
+      "oneItemNeedsReview": "1 item needs review.",
+      "manyItemsNeedReview": "{count} items need review.",
+      "ocrFailed": "OCR failed: {error}",
+      "ocrEngineInitializationFailed": "Failed to initialize the OCR engine.",
+      "ocrInspectionFailedForImage": "OCR inspection failed for image \"{imageName}\""
+    },
+    "formatters": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun",
+      "afterShowMerchandise": "After-show merchandise",
+      "merchandiseBooth": "Merch {boothLabel}",
+      "liveType": "Live",
+      "merchandiseType": "Merchandise"
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:app/core/gen/slang.g.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -28,13 +29,13 @@ class TimetableScanOcrDebugCard extends StatelessWidget {
         child: ExpansionTile(
           leading: Icon(Icons.terminal_rounded, color: scheme.primary),
           title: Text(
-            'OCR debug text',
+            t.timetableScan.ocrDebug.title,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           subtitle: Text(
-            'Raw text before parsing',
+            t.timetableScan.ocrDebug.subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),

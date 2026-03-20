@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:app/data/fixtures/timetable_debug_fixture.dart';
+import 'package:app/core/gen/slang.g.dart' as app;
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
-import 'package:app/domain/services/supported_timetable_parser.dart';
 import 'package:app/domain/usecases/scan_timetable_image_use_case.dart';
 import 'package:core/core.dart' as core;
 import 'package:flutter/foundation.dart';
@@ -20,8 +19,6 @@ abstract class TimetableScanState with _$TimetableScanState {
   const factory TimetableScanState({
     Uint8List? imageBytes,
     @Default('') String imageName,
-    @Default('') String previewDescription,
-    @Default(false) bool showAttachedSamplePreview,
     @Default(TimetableScanState.initialStatusMessage) String statusMessage,
     @Default(false) bool isBusy,
     TimetableScanResult? scanResult,
@@ -36,15 +33,13 @@ abstract class TimetableScanState with _$TimetableScanState {
   const TimetableScanState._();
 
   /// Initial guidance shown before OCR starts.
-  static const initialStatusMessage =
-      'Choose an image to start OCR extraction.';
+  static const initialStatusMessage = '';
 }
 
 /// Controls OCR execution and selection state for the timetable screen.
 @riverpod
 class TimetableScanController extends _$TimetableScanController {
   var _isDisposed = false;
-  var _bootstrappedQueryScenario = false;
   var _activeInspectionId = 0;
 
   @override
@@ -54,30 +49,9 @@ class TimetableScanController extends _$TimetableScanController {
       _isDisposed = true;
     });
 
-    if (!_bootstrappedQueryScenario) {
-      _bootstrappedQueryScenario = true;
-      final scenario = _scenarioFromQuery(Uri.base.queryParameters['scenario']);
-      if (scenario != null) {
-        unawaited(
-          Future<void>.microtask(() async {
-            switch (scenario) {
-              case TimetableDebugScenario.attachedSample:
-                await loadAttachedSample();
-              case TimetableDebugScenario.partialMerchandise:
-                await loadPartialMerchandiseSample();
-              case TimetableDebugScenario.unsupportedFormat:
-                await loadUnsupportedFormatSample();
-              case TimetableDebugScenario.ocrFailure:
-                await simulateOcrFailure();
-              case TimetableDebugScenario.canceledSelection:
-                simulateSelectionCanceled();
-            }
-          }),
-        );
-      }
-    }
-
-    return const TimetableScanState();
+    return TimetableScanState(
+      statusMessage: app.t.timetableScan.status.chooseImage,
+    );
   }
 
   /// Prompts the user to select an image and runs OCR against it.
@@ -97,11 +71,9 @@ class TimetableScanController extends _$TimetableScanController {
       imageBytes: image.bytes,
       imageName: image.name,
       isBusy: true,
-      previewDescription: '',
-      showAttachedSamplePreview: false,
       scanResult: null,
       selectedSlotIndices: const <int>{},
-      statusMessage: 'Running OCR and parsing the timetable…',
+      statusMessage: app.t.timetableScan.status.runningOcr,
     );
 
     try {
@@ -117,8 +89,6 @@ class TimetableScanController extends _$TimetableScanController {
         for (var i = 0; i < result.schedules.length; i++) i,
       };
       state = state.copyWith(
-        previewDescription: '',
-        showAttachedSamplePreview: false,
         scanResult: result,
         selectedSlotIndices: indices,
         statusMessage: _statusMessageFor(result),
@@ -134,7 +104,11 @@ class TimetableScanController extends _$TimetableScanController {
         return;
       }
 
-      state = state.copyWith(statusMessage: 'OCR failed: $error');
+      state = state.copyWith(
+        statusMessage: app.t.timetableScan.status.ocrFailed(
+          error: error,
+        ),
+      );
     } finally {
       if (!_isDisposed && inspectionId == _activeInspectionId) {
         state = state.copyWith(isBusy: false);
@@ -146,60 +120,6 @@ class TimetableScanController extends _$TimetableScanController {
   void clearSelection() {
     _activeInspectionId++;
     state = const TimetableScanState();
-  }
-
-  /// Loads the deterministic attached timetable sample.
-  Future<void> loadAttachedSample() async {
-    await _loadDebugScenario(TimetableDebugScenario.attachedSample);
-  }
-
-  /// Loads a scenario where some merchandise slots are missing.
-  Future<void> loadPartialMerchandiseSample() async {
-    await _loadDebugScenario(TimetableDebugScenario.partialMerchandise);
-  }
-
-  /// Loads a scenario where the format is unsupported and zero rows parse.
-  Future<void> loadUnsupportedFormatSample() async {
-    await _loadDebugScenario(TimetableDebugScenario.unsupportedFormat);
-  }
-
-  /// Simulates a canceled image selection flow.
-  void simulateSelectionCanceled() {
-    _applySelectionCanceledState();
-  }
-
-  /// Simulates an OCR engine failure.
-  Future<void> simulateOcrFailure() async {
-    state = state.copyWith(
-      isBusy: true,
-      imageBytes: null,
-      imageName: TimetableDebugFixture.attachedSampleImageName,
-      previewDescription: TimetableDebugFixture.previewDescription(
-        TimetableDebugScenario.ocrFailure,
-      ),
-      showAttachedSamplePreview: false,
-      scanResult: null,
-      selectedSlotIndices: const <int>{},
-      statusMessage: 'Running OCR and parsing the timetable…',
-    );
-
-    try {
-      throw StateError('Failed to initialize the OCR engine.');
-    } on Object catch (error, stackTrace) {
-      _logOcrFailure(
-        imageName: TimetableDebugFixture.attachedSampleImageName,
-        error: error,
-        stackTrace: stackTrace,
-      );
-      if (_isDisposed) {
-        return;
-      }
-      state = state.copyWith(statusMessage: 'OCR failed: $error');
-    } finally {
-      if (!_isDisposed) {
-        state = state.copyWith(isBusy: false);
-      }
-    }
   }
 
   /// Updates whether the schedule at [index] is selected.
@@ -236,64 +156,12 @@ class TimetableScanController extends _$TimetableScanController {
     state = state.copyWith(selectedSlotIndices: const <int>{});
   }
 
-  Future<void> _loadDebugScenario(TimetableDebugScenario scenario) async {
-    state = state.copyWith(
-      isBusy: true,
-      imageBytes: null,
-      imageName: TimetableDebugFixture.attachedSampleImageName,
-      previewDescription: TimetableDebugFixture.previewDescription(scenario),
-      showAttachedSamplePreview: TimetableDebugFixture.usesAttachedPreview(
-        scenario,
-      ),
-      statusMessage: 'Loading validation scenario…',
-    );
-
-    try {
-      final result = ref
-          .read(supportedTimetableParserProvider)
-          .parse(TimetableDebugFixture.ocrResult(scenario));
-
-      if (_isDisposed) {
-        return;
-      }
-
-      final indices = {
-        for (var i = 0; i < result.schedules.length; i++) i,
-      };
-      state = state.copyWith(
-        scanResult: result,
-        selectedSlotIndices: indices,
-        statusMessage: _statusMessageFor(result),
-      );
-    } on Object catch (error, stackTrace) {
-      _logOcrFailure(
-        imageName: TimetableDebugFixture.attachedSampleImageName,
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      if (_isDisposed) {
-        return;
-      }
-
-      state = state.copyWith(statusMessage: 'OCR failed: $error');
-    } finally {
-      if (!_isDisposed) {
-        state = state.copyWith(isBusy: false);
-      }
-    }
-  }
-
   void _applySelectionCanceledState() {
     state = state.copyWith(
-      statusMessage: 'Image selection was canceled.',
+      statusMessage: app.t.timetableScan.status.selectionCanceled,
       isBusy: false,
       imageBytes: null,
       imageName: '',
-      previewDescription: TimetableDebugFixture.previewDescription(
-        TimetableDebugScenario.canceledSelection,
-      ),
-      showAttachedSamplePreview: false,
       scanResult: null,
       selectedSlotIndices: const <int>{},
     );
@@ -301,26 +169,21 @@ class TimetableScanController extends _$TimetableScanController {
 
   String _statusMessageFor(TimetableScanResult result) {
     if (!result.hasPerformances) {
-      return 'No supported timetable rows were detected.';
+      return app.t.timetableScan.status.noSupportedRows;
     }
 
-    final warningSuffix = result.warnings.isEmpty
-        ? ''
-        : ' ${result.warnings.length} item(s) need review.';
-    return 'Extracted ${result.performances.length} live set(s) and '
-        '${result.merchandiseSlots.length} merchandise slot(s) from OCR.'
-        '$warningSuffix';
-  }
-
-  TimetableDebugScenario? _scenarioFromQuery(String? value) {
-    return switch (value) {
-      'attached' => TimetableDebugScenario.attachedSample,
-      'partial' => TimetableDebugScenario.partialMerchandise,
-      'unsupported' => TimetableDebugScenario.unsupportedFormat,
-      'failure' => TimetableDebugScenario.ocrFailure,
-      'cancelled' || 'canceled' => TimetableDebugScenario.canceledSelection,
-      _ => null,
-    };
+    final warningCount = result.warnings.length;
+    final reviewMessage = warningCount == 1
+        ? app.t.timetableScan.status.oneItemNeedsReview
+        : app.t.timetableScan.status.manyItemsNeedReview(
+            count: warningCount,
+          );
+    final warningSuffix = warningCount == 0 ? '' : ' $reviewMessage';
+    final extractedCounts = app.t.timetableScan.status.extractedCounts(
+      liveCount: result.performances.length,
+      merchCount: result.merchandiseSlots.length,
+    );
+    return '$extractedCounts$warningSuffix';
   }
 
   void _logOcrFailure({
@@ -328,7 +191,9 @@ class TimetableScanController extends _$TimetableScanController {
     required Object error,
     required StackTrace stackTrace,
   }) {
-    final message = 'OCR inspection failed for image "$imageName"';
+    final message = app.t.timetableScan.status.ocrInspectionFailedForImage(
+      imageName: imageName,
+    );
 
     if (core.AppLogger.isInitialized) {
       ref.read(core.appLoggerProvider).error(message, error, stackTrace);

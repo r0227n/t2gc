@@ -1,3 +1,4 @@
+import 'package:app/core/gen/slang.g.dart';
 import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/presentation/helpers/timetable_formatters.dart';
@@ -47,7 +48,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
       children: [
         if (schedules.isEmpty)
           Text(
-            'Detected events will appear here once a timetable is scanned.',
+            t.timetableScan.performanceList.emptyState,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -69,7 +70,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'EVENT DETAILS',
+                          t.timetableScan.performanceList.heading,
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: 2,
@@ -78,7 +79,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Select all',
+                        t.timetableScan.performanceList.selectAll,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -170,11 +171,10 @@ class _StitchEventRow extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final spacing = context.timetableScanSpacing;
-    const merchLabel = 'Merch/Event Time';
     final liveTime = schedule.performance.timeLabel;
     final merchTime = schedule.merchandise != null
         ? schedule.merchandise!.timeLabel
-        : 'N/A';
+        : t.timetableScan.performanceList.notAvailable;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -230,7 +230,10 @@ class _StitchEventRow extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 child: Text(
-                                  'SLOT ${schedule.slotNumber}',
+                                  context.t.timetableScan.performanceList
+                                      .slotLabel(
+                                        slotNumber: schedule.slotNumber,
+                                      ),
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: venueStyle.fg,
@@ -257,11 +260,15 @@ class _StitchEventRow extends StatelessWidget {
                     builder: (context, constraints) {
                       final narrow = constraints.maxWidth < 420;
                       final live = _InfoCell(
-                        label: 'Live Time',
+                        label: t.timetableScan.performanceList.liveTime,
                         value: liveTime,
                       );
                       final merch = _InfoCell(
-                        label: merchLabel,
+                        label: context
+                            .t
+                            .timetableScan
+                            .performanceList
+                            .merchEventTime,
                         value: merchTime,
                         valueColor: schedule.merchandise == null
                             ? scheme.onSurfaceVariant
@@ -272,8 +279,14 @@ class _StitchEventRow extends StatelessWidget {
                         child: TextButton.icon(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Editing is coming soon.'),
+                              SnackBar(
+                                content: Text(
+                                  context
+                                      .t
+                                      .timetableScan
+                                      .performanceList
+                                      .editingComingSoon,
+                                ),
                               ),
                             );
                           },
@@ -283,7 +296,7 @@ class _StitchEventRow extends StatelessWidget {
                             color: scheme.primary,
                           ),
                           label: Text(
-                            'Edit Details',
+                            t.timetableScan.performanceList.editDetails,
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: scheme.primary,
                               fontWeight: FontWeight.w800,
@@ -398,9 +411,11 @@ class _BottomActionBar extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final row = constraints.maxWidth >= 560;
-            final selectedTitle =
-                '$selectedCount Event${selectedCount == 1 ? '' : 's'} '
-                'Selected';
+            final selectedTitle = selectedCount == 1
+                ? t.timetableScan.performanceList.selectedOne
+                : t.timetableScan.performanceList.selectedMany(
+                    count: selectedCount,
+                  );
             final summary = Column(
               crossAxisAlignment: row
                   ? CrossAxisAlignment.start
@@ -415,7 +430,7 @@ class _BottomActionBar extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  'Adding to "Summer Festival 2024" calendar',
+                  t.timetableScan.performanceList.addingToCalendar,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -437,10 +452,13 @@ class _BottomActionBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'Google Calendar integration ships in a later '
-                          'release.',
+                          context
+                              .t
+                              .timetableScan
+                              .performanceList
+                              .calendarIntegrationComingSoon,
                         ),
                       ),
                     );
@@ -461,7 +479,11 @@ class _BottomActionBar extends StatelessWidget {
                         const SizedBox(width: 10),
                         Flexible(
                           child: Text(
-                            'Add selected to Google Calendar',
+                            context
+                                .t
+                                .timetableScan
+                                .performanceList
+                                .addSelectedToGoogleCalendar,
                             style: theme.textTheme.titleSmall?.copyWith(
                               color: scheme.onPrimary,
                               fontWeight: FontWeight.w800,

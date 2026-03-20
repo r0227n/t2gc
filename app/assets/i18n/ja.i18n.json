@@ -1,4 +1,9 @@
 {
+  "app": {
+    "title": "タイムテーブル OCR",
+    "shellTitle": "タイムテーブルを Google カレンダーへ",
+    "settingsTooltip": "設定"
+  },
   "settings": {
     "title": "設定",
     "language": "言語",
@@ -8,6 +13,66 @@
     "sections": {
       "appSettings": "アプリ設定",
       "other": "その他"
+    }
+  },
+  "timetableScan": {
+    "warnings": {
+      "needsReview": "要確認"
+    },
+    "performanceList": {
+      "emptyState": "タイムテーブルを読み込むと検出されたイベントがここに表示されます。",
+      "heading": "イベント詳細",
+      "selectAll": "すべて選択",
+      "slotLabel": "SLOT {slotNumber}",
+      "liveTime": "ライブ時間",
+      "merchEventTime": "特典会 / イベント時間",
+      "notAvailable": "N/A",
+      "editDetails": "詳細を編集",
+      "editingComingSoon": "編集機能は近日公開予定です。",
+      "selectedOne": "1 件のイベントを選択中",
+      "selectedMany": "{count} 件のイベントを選択中",
+      "addingToCalendar": "\"Summer Festival 2024\" のカレンダーに追加中",
+      "addSelectedToGoogleCalendar": "選択したイベントを Google カレンダーに追加",
+      "calendarIntegrationComingSoon": "Google カレンダー連携は次のリリースで対応予定です。"
+    },
+    "hero": {
+      "selectedImagePreview": "選択した画像のプレビュー",
+      "clearSelectedImageTooltip": "選択した画像を削除",
+      "dropTimetableImageHere": "タイムテーブル画像をここにドロップ",
+      "analyzing": "解析中…",
+      "browseFiles": "ファイルを選択",
+      "selectedOne": "1 件のイベントを検出しました。",
+      "selectedMany": "{count} 件のイベントを検出しました。"
+    },
+    "ocrDebug": {
+      "title": "OCR デバッグテキスト",
+      "subtitle": "解析前の生テキスト"
+    },
+    "status": {
+      "chooseImage": "画像を選択すると OCR 抽出を開始します。",
+      "runningOcr": "タイムテーブルを OCR 解析中です…",
+      "loadingScenario": "検証シナリオを読み込み中です…",
+      "selectionCanceled": "画像の選択がキャンセルされました。",
+      "noSupportedRows": "対応するタイムテーブル行を検出できませんでした。",
+      "extractedCounts": "OCR からライブ {liveCount} 件と特典会 {merchCount} 件を抽出しました。",
+      "oneItemNeedsReview": "1 件の確認が必要です。",
+      "manyItemsNeedReview": "{count} 件の確認が必要です。",
+      "ocrFailed": "OCR に失敗しました: {error}",
+      "ocrEngineInitializationFailed": "OCR エンジンの初期化に失敗しました。",
+      "ocrInspectionFailedForImage": "画像 \"{imageName}\" の OCR 解析に失敗しました。"
+    },
+    "formatters": {
+      "monday": "月",
+      "tuesday": "火",
+      "wednesday": "水",
+      "thursday": "木",
+      "friday": "金",
+      "saturday": "土",
+      "sunday": "日",
+      "afterShowMerchandise": "終演後物販",
+      "merchandiseBooth": "物販 {boothLabel}",
+      "liveType": "ライブ",
+      "merchandiseType": "物販"
     }
   }
 }
