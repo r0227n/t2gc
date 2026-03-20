@@ -88,6 +88,15 @@ class SupportedTimetableParser {
     final deduplicatedRows = _deduplicateSchedules(parsedSchedules);
     if (deduplicatedRows.isEmpty) {
       warnings.add('対応フォーマットの行を検出できませんでした。');
+    } else {
+      final missingMerchandiseCount = deduplicatedRows
+          .where((row) => row.merchandise == null)
+          .length;
+      if (missingMerchandiseCount > 0) {
+        warnings.add(
+          '$missingMerchandiseCount 件の特典会時間を取得できませんでした。',
+        );
+      }
     }
 
     return TimetableScanResult(

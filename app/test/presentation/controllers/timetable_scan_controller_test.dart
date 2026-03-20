@@ -34,6 +34,65 @@ void main() {
       expect(state.scanResult, isNull);
     });
 
+    test('loads the attached sample with all slots selected', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .loadAttachedSample();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.showAttachedSamplePreview, isTrue);
+      expect(state.scanResult?.performances, hasLength(31));
+      expect(state.scanResult?.merchandiseSlots, hasLength(31));
+      expect(state.selectedSlotIndices.length, 31);
+      expect(state.statusMessage, 'OCR から 31 組のライブと 31 件の物販を抽出しました。');
+    });
+
+    test('surfaces warning counts for partial merchandise sample', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .loadPartialMerchandiseSample();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.scanResult?.performances, hasLength(3));
+      expect(state.scanResult?.merchandiseSlots, hasLength(1));
+      expect(
+        state.statusMessage,
+        'OCR から 3 組のライブと 1 件の物販を抽出しました。 要確認 1 件。',
+      );
+    });
+
+    test('surfaces unsupported format status for zero parsed rows', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .loadUnsupportedFormatSample();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.scanResult?.performances, isEmpty);
+      expect(state.selectedSlotIndices, isEmpty);
+      expect(state.statusMessage, '対応フォーマットの行を検出できませんでした。');
+    });
+
     test('stores parsed timetable data after OCR succeeds', () async {
       final container = _createContainer(
         imagePickerService: TimetableImagePickerService(
@@ -68,7 +127,7 @@ void main() {
       expect(state.isBusy, isFalse);
       expect(state.scanResult?.performances, hasLength(1));
       expect(state.scanResult?.merchandiseSlots, hasLength(1));
-      expect(state.selectedSlots, const {1});
+      expect(state.selectedSlotIndices, const {0});
       expect(state.statusMessage, 'OCR から 1 組のライブと 1 件の物販を抽出しました。');
     });
 
@@ -143,16 +202,63 @@ void main() {
       await notifier.inspectFromGallery();
       final before = container
           .read(timetableScanControllerProvider)
-          .selectedSlots;
+          .selectedSlotIndices;
 
-      notifier.setSlotSelected(slotNumber: 1, isSelected: false);
+      notifier.setSlotSelected(index: 0, isSelected: false);
 
       final after = container
           .read(timetableScanControllerProvider)
-          .selectedSlots;
-      expect(before, const {1});
+          .selectedSlotIndices;
+      expect(before, const {0});
       expect(after, isEmpty);
       expect(identical(before, after), isFalse);
+    });
+
+    test('can select all and clear all sample slots', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(timetableScanControllerProvider.notifier);
+      await notifier.loadAttachedSample();
+      notifier.clearAllSlots();
+      expect(
+        container.read(timetableScanControllerProvider).selectedSlotIndices,
+        isEmpty,
+      );
+
+      notifier.selectAllSlots();
+      expect(
+        container.read(timetableScanControllerProvider).selectedSlotIndices.length,
+        31,
+      );
+    });
+
+    test('simulates OCR failure with a surfaced error message', () async {
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = (details) {};
+      addTearDown(() {
+        FlutterError.onError = originalOnError;
+      });
+
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .simulateOcrFailure();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.isBusy, isFalse);
+      expect(state.scanResult, isNull);
+      expect(state.statusMessage, contains('OCR に失敗しました:'));
     });
   });
 }

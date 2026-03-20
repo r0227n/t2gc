@@ -6,7 +6,7 @@ import 'package:integration_test/integration_test.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('shows live and merchandise schedule on first launch', (
+  testWidgets('validates deterministic normal and abnormal scenarios', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -16,30 +16,53 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('COLOR of COLOR'), findsWidgets);
-    expect(find.text('09:15〜09:35'), findsWidgets);
-    expect(find.text('09:50〜11:10'), findsWidgets);
-    expect(find.text('62 件'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.textContaining('Merry BAD TUNE.'),
-      600,
-    );
-    expect(find.textContaining('Merry BAD TUNE.'), findsWidgets);
-    expect(find.text('21:10〜22:30'), findsWidgets);
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('artist-schedule-1')),
-    );
-    final firstRowCheckbox = find.descendant(
-      of: find.byKey(const ValueKey('artist-schedule-1')),
-      matching: find.byType(Checkbox),
-    );
-
-    await tester.tap(firstRowCheckbox);
+    await tester.tap(find.byKey(const ValueKey('scenario-attached-sample')));
     await tester.pumpAndSettle();
 
-    expect(find.text('30 組'), findsOneWidget);
-    expect(find.text('60 件'), findsOneWidget);
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
+    expect(find.text('09:15〜09:35'), findsWidgets);
+    expect(find.text('09:50〜11:10'), findsWidgets);
+    expect(find.byKey(const ValueKey('artist-schedule-28')), findsOneWidget);
+    expect(find.text('21:10〜22:30'), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('artist-filter-1')));
+    await tester.tap(find.byKey(const ValueKey('artist-filter-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsNothing);
+    expect(find.text('表示中 30 / 31 組'), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('scenario-partial-merchandise')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('scenario-partial-merchandise')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 件の特典会時間を取得できませんでした。'), findsOneWidget);
+    expect(find.text('未取得'), findsNWidgets(2));
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('scenario-unsupported-format')),
+    );
+    await tester.tap(find.byKey(const ValueKey('scenario-unsupported-format')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('対応フォーマットの行を検出できませんでした。'), findsWidgets);
+
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (details) {};
+    addTearDown(() {
+      FlutterError.onError = originalOnError;
+    });
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('scenario-ocr-failure')),
+    );
+    await tester.tap(find.byKey(const ValueKey('scenario-ocr-failure')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('OCR に失敗しました:'), findsOneWidget);
   });
 }

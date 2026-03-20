@@ -62,16 +62,92 @@ class AppTheme {
   /// A fully configured [ThemeData] for light mode
   ThemeData toLightTheme() {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.deepPurple,
+      seedColor: const Color(0xFF6750A4),
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       extensions: _extensions,
+      textTheme: _buildTextTheme(colorScheme.onSurface),
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.inversePrimary,
+        centerTitle: true,
+        backgroundColor: colorScheme.surfaceContainerLow,
         foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 2,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        color: colorScheme.surfaceContainerLowest,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static TextTheme _buildTextTheme(Color onSurface) {
+    return TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 40,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+        height: 1.15,
+        color: onSurface,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        height: 1.3,
+        color: onSurface,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+        color: onSurface,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
+        color: onSurface,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        height: 1.45,
+        color: onSurface,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+        color: onSurface.withValues(alpha: 0.8),
+      ),
+      labelLarge: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.25,
+        color: onSurface,
       ),
     );
   }
@@ -88,7 +164,7 @@ class AppTheme {
   /// A fully configured [ThemeData] for dark mode
   ThemeData toDarkTheme() {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.deepPurple,
+      seedColor: const Color(0xFF6750A4),
       brightness: Brightness.dark,
     );
 
@@ -96,9 +172,37 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       extensions: _extensions,
+      textTheme: _buildTextTheme(colorScheme.onSurface),
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.inversePrimary,
+        centerTitle: true,
+        backgroundColor: colorScheme.surfaceContainerLow,
         foregroundColor: colorScheme.onSurface,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 2,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        color: colorScheme.surfaceContainerLow,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
       ),
     );
   }

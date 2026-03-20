@@ -1,0 +1,4 @@
+interface:
+  display_name: "Debug Web"
+  short_description: "Flutter Web debugging with agent-browser"
+  default_prompt: "Use $debug-web to run and inspect the Flutter Web app with agent-browser."

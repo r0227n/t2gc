@@ -1,3 +1,4 @@
+import 'package:app/data/fixtures/timetable_debug_fixture.dart';
 import 'package:app/domain/services/supported_timetable_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
@@ -297,6 +298,50 @@ No. ライブ時間 出演者 物販枠 物販時間
       expect(last.merchandise?.isAfterShow, isTrue);
       expect(last.merchandise?.startAt, DateTime(2026, 3, 21, 21, 10));
       expect(last.merchandise?.endAt, DateTime(2026, 3, 21, 22, 30));
+    });
+
+    test('parses the full attached sample timetable', () {
+      final parsed = parser.parse(
+        TimetableDebugFixture.ocrResult(TimetableDebugScenario.attachedSample),
+      );
+
+      expect(parsed.performances, hasLength(31));
+      expect(parsed.merchandiseSlots, hasLength(31));
+      expect(parsed.warnings, isEmpty);
+      expect(parsed.schedules.first.artistName, 'COLOR of COLOR');
+      expect(parsed.schedules.last.artistName, 'われらがプワプワプーワプワ');
+      expect(
+        parsed.metadata.afterShowMerchandiseStartAt,
+        DateTime(2026, 3, 21, 21, 10),
+      );
+      expect(
+        parsed.metadata.afterShowMerchandiseEndAt,
+        DateTime(2026, 3, 21, 22, 30),
+      );
+    });
+
+    test('adds warnings when merchandise times are missing', () {
+      final parsed = parser.parse(
+        TimetableDebugFixture.ocrResult(
+          TimetableDebugScenario.partialMerchandise,
+        ),
+      );
+
+      expect(parsed.performances, hasLength(3));
+      expect(parsed.merchandiseSlots, hasLength(1));
+      expect(parsed.warnings, contains('2 件の特典会時間を取得できませんでした。'));
+    });
+
+    test('adds warnings when no supported rows are detected', () {
+      final parsed = parser.parse(
+        TimetableDebugFixture.ocrResult(
+          TimetableDebugScenario.unsupportedFormat,
+        ),
+      );
+
+      expect(parsed.performances, isEmpty);
+      expect(parsed.merchandiseSlots, isEmpty);
+      expect(parsed.warnings, contains('対応フォーマットの行を検出できませんでした。'));
     });
   });
 }
