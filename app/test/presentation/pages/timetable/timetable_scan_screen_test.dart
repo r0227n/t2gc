@@ -1,9 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:app/data/models/selected_timetable_image.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/data/services/timetable_ocr_service.dart';
 import 'package:app/presentation/pages/timetable_scan_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -155,6 +154,49 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('OCR に失敗しました:'), findsOneWidget);
+  });
+
+  testWidgets('hides drag and drop on iOS and Android', (tester) async {
+    for (final platform in <TargetPlatform>[
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    ]) {
+      debugDefaultTargetPlatformOverride = platform;
+      try {
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: TimetableScanScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const ValueKey('drag-drop-label')), findsNothing);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    }
+  });
+
+  testWidgets('shows drag and drop on desktop platforms', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: TimetableScanScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('drag-drop-label')), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 }
 

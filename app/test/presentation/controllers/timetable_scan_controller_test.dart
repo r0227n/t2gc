@@ -131,6 +131,42 @@ void main() {
       expect(state.statusMessage, 'OCR から 1 組のライブと 1 件の物販を抽出しました。');
     });
 
+    test(
+      'stores parsed timetable data for a directly provided image',
+      () async {
+        final container = _createContainer(
+          imagePickerService: TimetableImagePickerService(
+            pickImage: () async => null,
+          ),
+          ocrService: TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _ocrResultFixture(),
+          ),
+        );
+        addTearDown(container.dispose);
+
+        final notifier = container.read(
+          timetableScanControllerProvider.notifier,
+        );
+        await notifier.inspectSelectedImage(
+          SelectedTimetableImage(
+            bytes: Uint8List.fromList([1, 2, 3]),
+            name: 'dropped.png',
+          ),
+        );
+
+        final state = container.read(timetableScanControllerProvider);
+        expect(state.imageName, 'dropped.png');
+        expect(state.isBusy, isFalse);
+        expect(state.scanResult?.performances, hasLength(1));
+        expect(state.scanResult?.merchandiseSlots, hasLength(1));
+        expect(state.selectedSlotIndices, const {0});
+      },
+    );
+
     test('clears busy state and surfaces errors when OCR fails', () async {
       final originalOnError = FlutterError.onError;
       FlutterError.onError = (details) {};
@@ -232,7 +268,10 @@ void main() {
 
       notifier.selectAllSlots();
       expect(
-        container.read(timetableScanControllerProvider).selectedSlotIndices.length,
+        container
+            .read(timetableScanControllerProvider)
+            .selectedSlotIndices
+            .length,
         31,
       );
     });

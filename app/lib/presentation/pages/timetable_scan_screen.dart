@@ -60,6 +60,7 @@ class TimetableScanScreen extends ConsumerWidget {
                 TimetableScanActionCard(
                   isBusy: scanState.isBusy,
                   onInspectOcr: notifier.inspectFromGallery,
+                  onInspectDroppedImage: notifier.inspectSelectedImage,
                 ),
                 const SizedBox(height: 20),
                 TimetableScanDebugScenariosCard(

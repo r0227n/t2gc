@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app/data/fixtures/timetable_debug_fixture.dart';
+import 'package:app/data/models/selected_timetable_image.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/domain/services/supported_timetable_parser.dart';
@@ -25,7 +26,10 @@ abstract class TimetableScanState with _$TimetableScanState {
     @Default(TimetableScanState.initialStatusMessage) String statusMessage,
     @Default(false) bool isBusy,
     TimetableScanResult? scanResult,
-    /// Indices into [scanResult!.schedules] for selected rows (each checkbox independent).
+
+    /// Indices into [scanResult!.schedules] for selected rows.
+    ///
+    /// Each checkbox is independent.
     @Default(<int>{}) Set<int> selectedSlotIndices,
   }) = _TimetableScanState;
 
@@ -86,6 +90,11 @@ class TimetableScanController extends _$TimetableScanController {
       return;
     }
 
+    await inspectSelectedImage(image);
+  }
+
+  /// Runs OCR against an already selected image payload.
+  Future<void> inspectSelectedImage(SelectedTimetableImage image) async {
     state = state.copyWith(
       isBusy: true,
       previewDescription: '',
@@ -187,7 +196,9 @@ class TimetableScanController extends _$TimetableScanController {
     }
   }
 
-  /// Updates whether the schedule at [index] is selected (each row independent).
+  /// Updates whether the schedule at [index] is selected.
+  ///
+  /// Each row is independent.
   void setSlotSelected({
     required int index,
     required bool isSelected,

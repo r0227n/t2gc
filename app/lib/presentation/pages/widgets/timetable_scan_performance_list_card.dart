@@ -18,7 +18,9 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
   /// Parsed OCR result containing the timetable schedules.
   final TimetableScanResult? scanResult;
 
-  /// Indices into [scanResult!.schedules] for selected rows (each row independent).
+  /// Indices into [scanResult!.schedules] for selected rows.
+  ///
+  /// Each row is independent.
   final Set<int> selectedSlotIndices;
 
   /// Toggles whether the schedule at the given index is selected.
