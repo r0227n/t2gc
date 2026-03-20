@@ -25,6 +25,7 @@ abstract class TimetableScanState with _$TimetableScanState {
     @Default(TimetableScanState.initialStatusMessage) String statusMessage,
     @Default(false) bool isBusy,
     TimetableScanResult? scanResult,
+
     /// Indices into [scanResult!.schedules] for selected rows (each checkbox independent).
     @Default(<int>{}) Set<int> selectedSlotIndices,
   }) = _TimetableScanState;
@@ -33,7 +34,8 @@ abstract class TimetableScanState with _$TimetableScanState {
   const TimetableScanState._();
 
   /// Initial guidance shown before OCR starts.
-  static const initialStatusMessage = '画像を選んで OCR 取込を開始してください。';
+  static const initialStatusMessage =
+      'Choose an image to start OCR extraction.';
 }
 
 /// Controls OCR execution and selection state for the timetable screen.
@@ -90,7 +92,7 @@ class TimetableScanController extends _$TimetableScanController {
       isBusy: true,
       previewDescription: '',
       showAttachedSamplePreview: false,
-      statusMessage: 'OCR を実行してタイムテーブルを解析しています...',
+      statusMessage: 'Running OCR and parsing the timetable…',
     );
 
     try {
@@ -125,7 +127,7 @@ class TimetableScanController extends _$TimetableScanController {
         return;
       }
 
-      state = state.copyWith(statusMessage: 'OCR に失敗しました: $error');
+      state = state.copyWith(statusMessage: 'OCR failed: $error');
     } finally {
       if (!_isDisposed) {
         state = state.copyWith(isBusy: false);
@@ -165,11 +167,11 @@ class TimetableScanController extends _$TimetableScanController {
       showAttachedSamplePreview: false,
       scanResult: null,
       selectedSlotIndices: const <int>{},
-      statusMessage: 'OCR を実行してタイムテーブルを解析しています...',
+      statusMessage: 'Running OCR and parsing the timetable…',
     );
 
     try {
-      throw StateError('OCR エンジンの初期化に失敗しました。');
+      throw StateError('Failed to initialize the OCR engine.');
     } on Object catch (error, stackTrace) {
       _logOcrFailure(
         imageName: TimetableDebugFixture.attachedSampleImageName,
@@ -179,7 +181,7 @@ class TimetableScanController extends _$TimetableScanController {
       if (_isDisposed) {
         return;
       }
-      state = state.copyWith(statusMessage: 'OCR に失敗しました: $error');
+      state = state.copyWith(statusMessage: 'OCR failed: $error');
     } finally {
       if (!_isDisposed) {
         state = state.copyWith(isBusy: false);
@@ -228,7 +230,7 @@ class TimetableScanController extends _$TimetableScanController {
       showAttachedSamplePreview: TimetableDebugFixture.usesAttachedPreview(
         scenario,
       ),
-      statusMessage: '検証用シナリオを読み込んでいます...',
+      statusMessage: 'Loading validation scenario…',
     );
 
     try {
@@ -259,7 +261,7 @@ class TimetableScanController extends _$TimetableScanController {
         return;
       }
 
-      state = state.copyWith(statusMessage: 'OCR に失敗しました: $error');
+      state = state.copyWith(statusMessage: 'OCR failed: $error');
     } finally {
       if (!_isDisposed) {
         state = state.copyWith(isBusy: false);
@@ -269,7 +271,7 @@ class TimetableScanController extends _$TimetableScanController {
 
   void _applySelectionCanceledState() {
     state = state.copyWith(
-      statusMessage: '画像選択がキャンセルされました。',
+      statusMessage: 'Image selection was canceled.',
       isBusy: false,
       imageBytes: null,
       imageName: '',
@@ -284,14 +286,14 @@ class TimetableScanController extends _$TimetableScanController {
 
   String _statusMessageFor(TimetableScanResult result) {
     if (!result.hasPerformances) {
-      return '対応フォーマットの行を検出できませんでした。';
+      return 'No supported timetable rows were detected.';
     }
 
     final warningSuffix = result.warnings.isEmpty
         ? ''
-        : ' 要確認 ${result.warnings.length} 件。';
-    return 'OCR から ${result.performances.length} 組のライブと '
-        '${result.merchandiseSlots.length} 件の物販を抽出しました。'
+        : ' ${result.warnings.length} item(s) need review.';
+    return 'Extracted ${result.performances.length} live set(s) and '
+        '${result.merchandiseSlots.length} merchandise slot(s) from OCR.'
         '$warningSuffix';
   }
 

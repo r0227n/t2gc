@@ -20,10 +20,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('画像を選んで OCR 取込'), findsOneWidget);
-    expect(find.text('検証シナリオ'), findsOneWidget);
-    expect(find.text('ライブ / 物販タイムテーブル'), findsOneWidget);
-    expect(find.text('タイムテーブルを検出するとここに表示します。'), findsOneWidget);
+    expect(find.text('Browse Files'), findsOneWidget);
+    expect(find.text('Validation scenarios'), findsOneWidget);
+    expect(find.text('Verify extracted events'), findsNothing);
+    expect(
+      find.text(
+        'Detected events will appear here once a timetable is scanned.',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('COLOR of COLOR'), findsNothing);
     expect(find.text('09:50〜11:10'), findsNothing);
   });
@@ -57,18 +62,16 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('画像を選んで OCR 取込'));
+    await tester.tap(find.text('Browse Files'));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
     expect(find.text('09:15〜09:35'), findsWidgets);
     expect(find.text('09:50〜11:10'), findsWidgets);
-    expect(find.text('OCR デバッグテキスト'), findsOneWidget);
+    expect(find.text('OCR debug text'), findsOneWidget);
   });
 
-  testWidgets('filters displayed groups based on checkbox selection', (
-    tester,
-  ) async {
+  testWidgets('row checkboxes control selection counts', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -78,38 +81,46 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('scenario-attached-sample')),
+    );
     await tester.tap(find.byKey(const ValueKey('scenario-attached-sample')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
     expect(find.byKey(const ValueKey('artist-schedule-28')), findsOneWidget);
 
-    Checkbox checkboxValue(int index) => tester.widget<Checkbox>(
-      find.byKey(ValueKey('artist-filter-checkbox-$index')),
+    Checkbox rowCheckbox(int slot) => tester.widget<Checkbox>(
+      find.byKey(ValueKey('event-row-checkbox-$slot')),
     );
 
-    expect(checkboxValue(0).value, isTrue);
-    expect(checkboxValue(1).value, isTrue);
+    expect(rowCheckbox(1).value, isTrue);
+    expect(rowCheckbox(2).value, isTrue);
 
     await tester.ensureVisible(
-      find.byKey(const ValueKey('artist-filter-checkbox-0')),
+      find.byKey(const ValueKey('event-row-checkbox-1')),
     );
-    await tester.tap(find.byKey(const ValueKey('artist-filter-checkbox-0')));
+    await tester.tap(find.byKey(const ValueKey('event-row-checkbox-1')));
     await tester.pumpAndSettle();
 
-    expect(checkboxValue(0).value, isFalse);
-    expect(checkboxValue(1).value, isTrue);
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsNothing);
-    expect(find.text('表示中 30 / 31 組'), findsOneWidget);
+    expect(rowCheckbox(1).value, isFalse);
+    expect(rowCheckbox(2).value, isTrue);
+    expect(find.textContaining('30 Event'), findsOneWidget);
 
     await tester.ensureVisible(
-      find.byKey(const ValueKey('clear-all-slots-button')),
+      find.byKey(const ValueKey('select-all-slots-checkbox')),
     );
-    await tester.tap(find.byKey(const ValueKey('clear-all-slots-button')));
+    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
     await tester.pumpAndSettle();
 
-    expect(find.text('表示対象のグループがありません。チェックをONにしてください。'), findsOneWidget);
-    expect(find.text('表示中 0 / 31 組'), findsOneWidget);
+    expect(rowCheckbox(1).value, isTrue);
+    expect(find.textContaining('31 Event'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
+    await tester.pumpAndSettle();
+
+    expect(rowCheckbox(1).value, isFalse);
+    expect(find.text('0 Events Selected'), findsOneWidget);
   });
 
   testWidgets('shows warnings for partial merchandise sample', (tester) async {
@@ -122,14 +133,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('scenario-partial-merchandise')),
+    );
     await tester.tap(
       find.byKey(const ValueKey('scenario-partial-merchandise')),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('要確認'), findsOneWidget);
+    expect(find.text('Needs review'), findsOneWidget);
     expect(find.text('2 件の特典会時間を取得できませんでした。'), findsOneWidget);
-    expect(find.text('未取得'), findsNWidgets(2));
+    expect(find.text('N/A'), findsNWidgets(2));
   });
 
   testWidgets('shows error status for simulated OCR failure', (tester) async {
@@ -154,7 +168,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('scenario-ocr-failure')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('OCR に失敗しました:'), findsOneWidget);
+    expect(find.textContaining('OCR failed:'), findsOneWidget);
   });
 }
 

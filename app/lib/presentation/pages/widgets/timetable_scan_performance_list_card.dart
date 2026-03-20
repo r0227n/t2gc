@@ -1,9 +1,10 @@
 import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/presentation/helpers/timetable_formatters.dart';
+import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Timetable list showing live and merchandise slots per artist.
+/// Stitch verify layout: editorial rows, left accent bar, row checkboxes.
 class TimetableScanPerformanceListCard extends StatelessWidget {
   /// Creates the performance list card.
   const TimetableScanPerformanceListCard({
@@ -18,7 +19,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
   /// Parsed OCR result containing the timetable schedules.
   final TimetableScanResult? scanResult;
 
-  /// Indices into [scanResult!.schedules] for selected rows (each row independent).
+  /// Indices into [scanResult!.schedules] for selected rows.
   final Set<int> selectedSlotIndices;
 
   /// Toggles whether the schedule at the given index is selected.
@@ -32,244 +33,466 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.timetableScanSpacing;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final schedules =
         scanResult?.schedules ?? const <TimetableArtistSchedule>[];
-    final visibleSchedules = [
-      for (var i = 0; i < schedules.length; i++)
-        if (selectedSlotIndices.contains(i)) schedules[i],
-    ];
+    final selectedCount = selectedSlotIndices.length;
+    final allSelected =
+        schedules.isNotEmpty && selectedCount == schedules.length;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ライブ / 物販タイムテーブル',
-              style: Theme.of(context).textTheme.titleLarge,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (schedules.isEmpty)
+          Text(
+            'Detected events will appear here once a timetable is scanned.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 16),
-            if (schedules.isEmpty) const Text('タイムテーブルを検出するとここに表示します。'),
-            if (schedules.isNotEmpty) ...[
-              Row(
+          ),
+        if (schedules.isNotEmpty) ...[
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(
+                TimetableScanStitchTokens.radiusLg,
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(spacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Text(
-                      '表示中 ${visibleSchedules.length} / ${schedules.length} 組',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'EVENT DETAILS',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'Select all',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: spacing.s),
+                      Checkbox(
+                        key: const ValueKey('select-all-slots-checkbox'),
+                        value: allSelected,
+                        onChanged: (_) {
+                          if (allSelected) {
+                            onClearAllSlots();
+                          } else {
+                            onSelectAllSlots();
+                          }
+                        },
+                        activeColor: scheme.primary,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: spacing.m),
+                  for (var i = 0; i < schedules.length; i++)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: spacing.m),
+                      child: _StitchEventRow(
+                        key: ValueKey(
+                          'artist-schedule-${schedules[i].slotNumber}',
+                        ),
+                        schedule: schedules[i],
+                        accent: _accentForIndex(i, scheme),
+                        venueStyle: _venueStyleForIndex(i, scheme),
+                        isSelected: selectedSlotIndices.contains(i),
+                        onToggle: ({required selected}) => onToggleSlot(
+                          i,
+                          isSelected: selected,
+                        ),
+                      ),
                     ),
-                  ),
-                  TextButton(
-                    key: const ValueKey('select-all-slots-button'),
-                    onPressed: onSelectAllSlots,
-                    child: const Text('全選択'),
-                  ),
-                  TextButton(
-                    key: const ValueKey('clear-all-slots-button'),
-                    onPressed: onClearAllSlots,
-                    child: const Text('全解除'),
-                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              _SelectionPanel(
-                schedules: schedules,
-                selectedSlotIndices: selectedSlotIndices,
-                onToggleSlot: onToggleSlot,
-              ),
-              const SizedBox(height: 16),
-              if (visibleSchedules.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('表示対象のグループがありません。チェックをONにしてください。'),
-                ),
-            ],
-            for (final schedule in visibleSchedules)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: DecoratedBox(
-                  key: ValueKey('artist-schedule-${schedule.slotNumber}'),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          schedule.artistName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _ScheduleDetailRow(
-                          icon: Icons.music_note_outlined,
-                          label: 'ライブ',
-                          value: schedule.performance.timeLabel,
-                        ),
-                        if (schedule.merchandise case final merchandise?)
-                          _ScheduleDetailRow(
-                            icon: Icons.shopping_bag_outlined,
-                            label: merchandise.boothLabelText,
-                            value: merchandise.timeLabel,
-                          )
-                        else
-                          const _ScheduleDetailRow(
-                            icon: Icons.shopping_bag_outlined,
-                            label: '特典会',
-                            value: '未取得',
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+            ),
+          ),
+          SizedBox(height: spacing.m),
+          _BottomActionBar(selectedCount: selectedCount),
+        ],
+      ],
     );
   }
 }
 
-class _SelectionPanel extends StatelessWidget {
-  const _SelectionPanel({
-    required this.schedules,
-    required this.selectedSlotIndices,
-    required this.onToggleSlot,
-  });
-
-  final List<TimetableArtistSchedule> schedules;
-  final Set<int> selectedSlotIndices;
-  final void Function(int index, {required bool isSelected}) onToggleSlot;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < schedules.length; i++) ...[
-              _FilterChip(
-                key: ValueKey('artist-filter-$i'),
-                schedule: schedules[i],
-                index: i,
-                isSelected: selectedSlotIndices.contains(i),
-                onToggle: onToggleSlot,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+Color _accentForIndex(int index, ColorScheme scheme) {
+  final colors = <Color>[
+    scheme.tertiary,
+    scheme.secondary,
+    scheme.outlineVariant,
+  ];
+  return colors[index % colors.length];
 }
 
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
+({Color bg, Color fg}) _venueStyleForIndex(int index, ColorScheme scheme) {
+  final useTertiary = index % 3 != 1;
+  if (useTertiary) {
+    return (bg: scheme.tertiaryContainer, fg: scheme.onTertiaryContainer);
+  }
+  return (
+    bg: scheme.surfaceContainerHighest,
+    fg: scheme.onSurfaceVariant,
+  );
+}
+
+class _StitchEventRow extends StatelessWidget {
+  const _StitchEventRow({
     required this.schedule,
-    required this.index,
+    required this.accent,
+    required this.venueStyle,
     required this.isSelected,
     required this.onToggle,
     super.key,
   });
 
   final TimetableArtistSchedule schedule;
-  final int index;
+  final Color accent;
+  final ({Color bg, Color fg}) venueStyle;
   final bool isSelected;
-  final void Function(int index, {required bool isSelected}) onToggle;
+  final void Function({required bool selected}) onToggle;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 280,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFD7DEE6)),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final spacing = context.timetableScanSpacing;
+    const merchLabel = 'Merch/Event Time';
+    final liveTime = schedule.performance.timeLabel;
+    final merchTime = schedule.merchandise != null
+        ? schedule.merchandise!.timeLabel
+        : 'N/A';
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(
+          TimetableScanStitchTokens.radiusLg,
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 6,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Checkbox(
-                key: ValueKey('artist-filter-checkbox-$index'),
-                value: isSelected,
-                onChanged: (value) => onToggle(
-                  index,
-                  isSelected: value ?? false,
-                ),
+        boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+          scheme.onSurface,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(spacing.m + spacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 4,
+              height: 48,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(999),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Column(
+            ),
+            SizedBox(width: spacing.m),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        schedule.artistName,
-                        style: const TextStyle(fontSize: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              schedule.artistName,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: scheme.onSurface,
+                              ),
+                            ),
+                            SizedBox(height: spacing.xs),
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: venueStyle.bg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  'SLOT ${schedule.slotNumber}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: venueStyle.fg,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        schedule.performance.timeLabel,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Checkbox(
+                        key: ValueKey(
+                          'event-row-checkbox-${schedule.slotNumber}',
+                        ),
+                        value: isSelected,
+                        onChanged: (v) => onToggle(selected: v ?? false),
+                        activeColor: scheme.primary,
                       ),
                     ],
                   ),
-                ),
+                  SizedBox(height: spacing.m),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 420;
+                      final live = _InfoCell(
+                        label: 'Live Time',
+                        value: liveTime,
+                      );
+                      final merch = _InfoCell(
+                        label: merchLabel,
+                        value: merchTime,
+                        valueColor: schedule.merchandise == null
+                            ? scheme.onSurfaceVariant
+                            : null,
+                      );
+                      final edit = Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Editing is coming soon.'),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            size: 16,
+                            color: scheme.primary,
+                          ),
+                          label: Text(
+                            'Edit Details',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      );
+                      if (narrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            live,
+                            SizedBox(height: spacing.s),
+                            merch,
+                            edit,
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: live),
+                          SizedBox(width: spacing.m),
+                          Expanded(child: merch),
+                          SizedBox(
+                            width: 96,
+                            child: edit,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ScheduleDetailRow extends StatelessWidget {
-  const _ScheduleDetailRow({
-    required this.icon,
+class _InfoCell extends StatelessWidget {
+  const _InfoCell({
     required this.label,
     required this.value,
+    this.valueColor,
   });
 
-  final IconData icon;
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 72,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.6,
+            color: scheme.onSurfaceVariant,
           ),
-          Expanded(child: Text(value)),
-        ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: valueColor ?? scheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomActionBar extends StatelessWidget {
+  const _BottomActionBar({required this.selectedCount});
+
+  final int selectedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final spacing = context.timetableScanSpacing;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(
+          TimetableScanStitchTokens.radiusLg,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            scheme.surfaceContainerLow,
+            scheme.surfaceContainer,
+          ],
+        ),
+        boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+          scheme.onSurface,
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(spacing.l),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final row = constraints.maxWidth >= 560;
+            final selectedTitle =
+                '$selectedCount Event${selectedCount == 1 ? '' : 's'} '
+                'Selected';
+            final summary = Column(
+              crossAxisAlignment: row
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
+              children: [
+                Text(
+                  selectedTitle,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: spacing.xs),
+                Text(
+                  'Adding to "Summer Festival 2024" calendar',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                  textAlign: row ? TextAlign.start : TextAlign.center,
+                ),
+              ],
+            );
+            final button = DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                gradient: TimetableScanStitchTokens.primaryCtaGradient(scheme),
+                boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+                  scheme.onSurface,
+                ),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Google Calendar integration ships in a later '
+                          'release.',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_month_rounded,
+                          color: scheme.onPrimary,
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            'Add selected to Google Calendar',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: scheme.onPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            if (row) {
+              return Row(
+                children: [
+                  Expanded(child: summary),
+                  SizedBox(width: spacing.m),
+                  button,
+                ],
+              );
+            }
+            return Column(
+              children: [
+                summary,
+                SizedBox(height: spacing.m),
+                button,
+              ],
+            );
+          },
+        ),
       ),
     );
   }

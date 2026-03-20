@@ -1,105 +1,196 @@
+import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Hero section for the timetable scan screen.
+/// Stitch upload dropzone: nested surfaces, dual CTAs, curator explainer.
 class TimetableScanHeroCard extends StatelessWidget {
-  /// Creates the hero card.
+  /// Creates the hero / dropzone card.
   const TimetableScanHeroCard({
     required this.statusMessage,
     required this.supportedFormatLabel,
+    required this.isBusy,
+    required this.onInspectOcr,
     super.key,
   });
 
-  /// Current OCR/import status shown in the highlighted panel.
+  /// Current OCR/import status.
   final String statusMessage;
 
   /// Supported timetable format label.
   final String supportedFormatLabel;
 
+  /// Whether OCR processing is running.
+  final bool isBusy;
+
+  /// Starts OCR from a gallery image.
+  final Future<void> Function() onInspectOcr;
+
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: <Color>[
-            Color(0xFFF4647D),
-            Color(0xFFE85BA6),
-            Color(0xFF56C7C0),
-          ],
-        ),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x40000000),
-            blurRadius: 28,
-            offset: Offset(0, 16),
+    final theme = Theme.of(context);
+    final spacing = context.timetableScanSpacing;
+    final scheme = theme.colorScheme;
+    final outerRadius = BorderRadius.circular(
+      TimetableScanStitchTokens.radiusLg,
+    );
+    final innerRadius = BorderRadius.circular(
+      TimetableScanStitchTokens.radiusInset,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainer,
+            borderRadius: outerRadius,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Chip(
-              label: Text(supportedFormatLabel),
-              backgroundColor: Colors.white.withValues(alpha: 0.18),
-              labelStyle: const TextStyle(color: Colors.white),
-              side: BorderSide.none,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'タイムテーブルを\nGoogle Calendar 下書きへ。',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                height: 1.15,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              <String>[
-                '初回版は添付画像フォーマット専用です。',
-                '画像から OCR を実行して抽出結果を表示し、',
-                '出演者ごとにライブと物販の予定を確認できます。',
-              ].join(' '),
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.92),
-                fontSize: 15,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-            DecoratedBox(
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: innerRadius,
+                color: scheme.surfaceContainerLowest,
+                boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+                  scheme.onSurface,
+                ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+                padding: EdgeInsets.symmetric(
+                  vertical: spacing.xl + spacing.m,
+                  horizontal: spacing.l,
+                ),
+                child: Column(
                   children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        statusMessage,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: scheme.primaryContainer.withValues(
+                          alpha: 0.2,
                         ),
                       ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Icon(
+                          Icons.cloud_upload_rounded,
+                          size: 40,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: spacing.m),
+                    Text(
+                      'Drop your timetable here',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.25,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                    SizedBox(height: spacing.s),
+                    Text(
+                      'JPG, PNG, or PDF — we extract slots for your '
+                      'calendar ($supportedFormatLabel on first import).',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.45,
+                      ),
+                    ),
+                    SizedBox(height: spacing.l),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: spacing.m,
+                      runSpacing: spacing.s,
+                      children: [
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            gradient:
+                                TimetableScanStitchTokens.primaryCtaGradient(
+                                  scheme,
+                                ),
+                            boxShadow:
+                                TimetableScanStitchTokens.ambientCardShadow(
+                                  scheme.onSurface,
+                                ),
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(999),
+                              onTap: isBusy ? null : onInspectOcr,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.folder_open_rounded,
+                                      color: scheme.onPrimary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      isBusy ? 'Analyzing…' : 'Browse Files',
+                                      style: theme.textTheme.titleSmall
+                                          ?.copyWith(
+                                            color: scheme.onPrimary,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        if (isBusy) ...[
+          SizedBox(height: spacing.s),
+          ClipRRect(
+            borderRadius: context.timetableScanSectionRadius,
+            child: const LinearProgressIndicator(minHeight: 4),
+          ),
+        ],
+        SizedBox(height: spacing.l),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainer,
+            borderRadius: context.timetableScanSectionRadius,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(spacing.m),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: scheme.onSurfaceVariant,
+                ),
+                SizedBox(width: spacing.s),
+                Expanded(
+                  child: Text(
+                    statusMessage,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
