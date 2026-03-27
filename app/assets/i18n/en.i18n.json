@@ -1,7 +1,5 @@
 {
   "app": {
-    "title": "Timetable OCR",
-    "shellTitle": "Timetable to Google Calendar",
     "settingsTooltip": "Settings"
   },
   "settings": {

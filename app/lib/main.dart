@@ -89,7 +89,7 @@ Future<void> main() async {
 /// Root application widget.
 class MyApp extends ConsumerWidget {
   /// Creates the root application widget.
-  const MyApp({super.key});
+  const MyApp();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,7 +98,7 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: app.t.app.title,
+      title: 'Timetable to Google Calendar',
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

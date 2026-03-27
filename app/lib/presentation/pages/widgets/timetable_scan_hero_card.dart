@@ -15,7 +15,6 @@ class TimetableScanHeroCard extends StatelessWidget {
     required this.imageName,
     required this.eventCount,
     required this.onClearImage,
-    super.key,
   });
 
   /// Current OCR/import status.

@@ -1,7 +1,5 @@
 {
   "app": {
-    "title": "タイムテーブル OCR",
-    "shellTitle": "タイムテーブルを Google カレンダーへ",
     "settingsTooltip": "設定"
   },
   "settings": {

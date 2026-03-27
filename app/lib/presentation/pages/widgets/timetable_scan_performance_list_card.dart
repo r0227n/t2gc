@@ -14,7 +14,6 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
     required this.onToggleSlot,
     required this.onSelectAllSlots,
     required this.onClearAllSlots,
-    super.key,
   });
 
   /// Parsed OCR result containing the timetable schedules.
@@ -191,60 +190,14 @@ class _StitchEventRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 4,
-              height: 48,
-              decoration: BoxDecoration(
-                color: accent,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            SizedBox(width: spacing.m),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: spacing.m,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: spacing.xs,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              schedule.artistName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: scheme.onSurface,
-                              ),
-                            ),
-                            SizedBox(height: spacing.xs),
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: venueStyle.bg,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                child: Text(
-                                  context.t.timetableScan.performanceList
-                                      .slotLabel(
-                                        slotNumber: schedule.slotNumber,
-                                      ),
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: venueStyle.fg,
-                                    letterSpacing: 0.6,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                       Checkbox(
                         key: ValueKey(
                           'event-row-checkbox-${schedule.slotNumber}',
@@ -253,9 +206,15 @@ class _StitchEventRow extends StatelessWidget {
                         onChanged: (v) => onToggle(selected: v ?? false),
                         activeColor: scheme.primary,
                       ),
+                      Text(
+                        schedule.artistName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: scheme.onSurface,
+                        ),
+                      ),
                     ],
                   ),
-                  SizedBox(height: spacing.m),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final narrow = constraints.maxWidth < 420;
@@ -264,11 +223,7 @@ class _StitchEventRow extends StatelessWidget {
                         value: liveTime,
                       );
                       final merch = _InfoCell(
-                        label: context
-                            .t
-                            .timetableScan
-                            .performanceList
-                            .merchEventTime,
+                        label: t.timetableScan.performanceList.merchEventTime,
                         value: merchTime,
                         valueColor: schedule.merchandise == null
                             ? scheme.onSurfaceVariant
@@ -321,10 +276,7 @@ class _StitchEventRow extends StatelessWidget {
                           Expanded(child: live),
                           SizedBox(width: spacing.m),
                           Expanded(child: merch),
-                          SizedBox(
-                            width: 96,
-                            child: edit,
-                          ),
+                          edit,
                         ],
                       );
                     },

@@ -7,7 +7,6 @@ class TimetableScanOcrDebugCard extends StatelessWidget {
   /// Creates the OCR debug card.
   const TimetableScanOcrDebugCard({
     required this.rawText,
-    super.key,
   });
 
   /// Raw text returned by OCR before parsing.

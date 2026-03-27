@@ -9,7 +9,6 @@ class TimetableScanShell extends StatelessWidget {
   const TimetableScanShell({
     required this.body,
     this.showSideRail = true,
-    super.key,
   });
 
   /// Main scrollable content (placed beside the rail when [showSideRail]).
@@ -122,7 +121,7 @@ class _TopBar extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                t.app.shellTitle,
+                'Timetable to Google Calendar',
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,

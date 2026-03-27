@@ -64,10 +64,6 @@ class _TranslationsAppEn implements TranslationsAppJa {
 
   // Translations
   @override
-  String get title => 'Timetable OCR';
-  @override
-  String get shellTitle => 'Timetable to Google Calendar';
-  @override
   String get settingsTooltip => 'Settings';
 }
 

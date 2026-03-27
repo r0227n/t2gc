@@ -62,12 +62,6 @@ class TranslationsAppJa {
 
   // Translations
 
-  /// ja: 'タイムテーブル OCR'
-  String get title => 'タイムテーブル OCR';
-
-  /// ja: 'タイムテーブルを Google カレンダーへ'
-  String get shellTitle => 'タイムテーブルを Google カレンダーへ';
-
   /// ja: '設定'
   String get settingsTooltip => '設定';
 }
