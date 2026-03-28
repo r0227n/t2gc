@@ -93,6 +93,7 @@ class TimetableScanScreen extends ConsumerWidget {
                             statusMessage: scanState.statusMessage,
                             isBusy: scanState.isBusy,
                             onInspectOcr: notifier.inspectFromGallery,
+                            onInspectDroppedImage: notifier.inspectImage,
                             onClearImage: notifier.clearSelection,
                             imageBytes: scanState.imageBytes,
                             imageName: scanState.imageName,

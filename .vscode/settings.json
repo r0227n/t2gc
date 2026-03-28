@@ -12,8 +12,8 @@
   "dart.previewFlutterUiGuides": true,
   "dart.previewFlutterUiGuidesCustomTracking": true,
 
-  // Debug Toolbar Configuration
-  "debug.toolBarLocation": "commandCenter",
+  // // Debug Toolbar Configuration
+  // "debug.toolBarLocation": "commandCenter",
 
   // ===========================================
   // File Management

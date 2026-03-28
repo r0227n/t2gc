@@ -75,6 +75,44 @@ void main() {
       );
     });
 
+    test('runs OCR for a provided image payload', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+        ocrService: TimetableOcrService(
+          recognizeImage:
+              ({
+                required imageBytes,
+                required imageName,
+              }) async => _ocrResultFixture(),
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        timetableScanControllerProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .inspectImage(
+            SelectedTimetableImage(
+              bytes: Uint8List.fromList([4, 5, 6]),
+              name: 'dropped.png',
+            ),
+          );
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.imageName, 'dropped.png');
+      expect(state.isBusy, isFalse);
+      expect(state.scanResult?.performances, hasLength(1));
+      expect(state.selectedSlotIndices, const {0});
+    });
+
     test('clears busy state and surfaces errors when OCR fails', () async {
       final originalOnError = FlutterError.onError;
       FlutterError.onError = (details) {};
