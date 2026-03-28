@@ -25,12 +25,14 @@ void main() {
     expect(find.byKey(const ValueKey('artist-schedule-28')), findsOneWidget);
     expect(find.text('21:10〜22:30'), findsOneWidget);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('artist-filter-1')));
-    await tester.tap(find.byKey(const ValueKey('artist-filter-1')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('event-row-checkbox-1')),
+    );
+    await tester.tap(find.byKey(const ValueKey('event-row-checkbox-1')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsNothing);
-    expect(find.text('表示中 30 / 31 組'), findsOneWidget);
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
+    expect(find.textContaining('30 Event'), findsOneWidget);
 
     await tester.ensureVisible(
       find.byKey(const ValueKey('scenario-partial-merchandise')),
@@ -41,7 +43,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('2 件の特典会時間を取得できませんでした。'), findsOneWidget);
-    expect(find.text('未取得'), findsNWidgets(2));
+    expect(find.text('N/A'), findsNWidgets(2));
 
     await tester.ensureVisible(
       find.byKey(const ValueKey('scenario-unsupported-format')),
@@ -49,7 +51,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('scenario-unsupported-format')));
     await tester.pumpAndSettle();
 
-    expect(find.text('対応フォーマットの行を検出できませんでした。'), findsWidgets);
+    expect(
+      find.text('No supported timetable rows were detected.'),
+      findsWidgets,
+    );
 
     final originalOnError = FlutterError.onError;
     FlutterError.onError = (details) {};
@@ -63,6 +68,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('scenario-ocr-failure')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('OCR に失敗しました:'), findsOneWidget);
+    expect(find.textContaining('OCR failed:'), findsOneWidget);
   });
 }

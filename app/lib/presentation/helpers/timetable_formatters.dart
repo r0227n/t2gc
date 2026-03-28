@@ -1,3 +1,4 @@
+import 'package:app/core/gen/slang.g.dart' as app;
 import 'package:app/domain/models/timetable_calendar_entry.dart';
 import 'package:app/domain/models/timetable_merchandise_slot.dart';
 import 'package:app/domain/models/timetable_metadata.dart';
@@ -8,14 +9,14 @@ import 'package:intl/intl.dart';
 extension TimetableMetadataPresentation on TimetableMetadata {
   /// Formatted event date label for the Japanese UI.
   String get eventDateLabel {
-    const weekdays = <int, String>{
-      DateTime.monday: '月',
-      DateTime.tuesday: '火',
-      DateTime.wednesday: '水',
-      DateTime.thursday: '木',
-      DateTime.friday: '金',
-      DateTime.saturday: '土',
-      DateTime.sunday: '日',
+    final weekdays = <int, String>{
+      DateTime.monday: app.t.timetableScan.formatters.monday,
+      DateTime.tuesday: app.t.timetableScan.formatters.tuesday,
+      DateTime.wednesday: app.t.timetableScan.formatters.wednesday,
+      DateTime.thursday: app.t.timetableScan.formatters.thursday,
+      DateTime.friday: app.t.timetableScan.formatters.friday,
+      DateTime.saturday: app.t.timetableScan.formatters.saturday,
+      DateTime.sunday: app.t.timetableScan.formatters.sunday,
     };
 
     final dateLabel = DateFormat('yyyy.MM.dd').format(eventDate);
@@ -56,7 +57,11 @@ extension TimetablePerformanceSlotPresentation on TimetablePerformanceSlot {
 /// Presentation formatting helpers for merchandise slots.
 extension TimetableMerchandiseSlotPresentation on TimetableMerchandiseSlot {
   /// Human-readable booth label.
-  String get boothLabelText => isAfterShow ? '終演後物販' : '物販 $boothLabel';
+  String get boothLabelText => isAfterShow
+      ? app.t.timetableScan.formatters.afterShowMerchandise
+      : app.t.timetableScan.formatters.merchandiseBooth(
+          boothLabel: boothLabel ?? '',
+        );
 
   /// Human-readable time label.
   String get timeLabel {
@@ -69,8 +74,9 @@ extension TimetableMerchandiseSlotPresentation on TimetableMerchandiseSlot {
 extension TimetableCalendarEntryPresentation on TimetableCalendarEntry {
   /// UI label for the event type.
   String get typeLabel => switch (type) {
-    TimetableCalendarEntryType.live => 'ライブ',
-    TimetableCalendarEntryType.merchandise => '物販',
+    TimetableCalendarEntryType.live => app.t.timetableScan.formatters.liveType,
+    TimetableCalendarEntryType.merchandise =>
+      app.t.timetableScan.formatters.merchandiseType,
   };
 
   /// Human-readable time label.

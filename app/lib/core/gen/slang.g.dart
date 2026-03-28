@@ -4,7 +4,7 @@
 /// To regenerate, run: `dart run slang`
 ///
 /// Locales: 2
-/// Strings: 14 (7 per locale)
+/// Strings: 108 (54 per locale)
 
 // coverage:ignore-file
 // ignore_for_file: type=lint, unused_import
@@ -26,8 +26,7 @@ part 'slang_ja.g.dart';
 /// - if (LocaleSettings.currentLocale == AppLocale.ja) // locale check
 enum AppLocale with BaseAppLocale<AppLocale, Translations> {
   ja(languageCode: 'ja'),
-  en(languageCode: 'en')
-  ;
+  en(languageCode: 'en');
 
   const AppLocale({
     required this.languageCode,

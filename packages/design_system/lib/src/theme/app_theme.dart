@@ -1,5 +1,7 @@
 import 'package:design_system/src/theme/extensions/app_radius_theme.dart';
 import 'package:design_system/src/theme/extensions/app_spacing_theme.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 
 /// Application theme configuration and management
@@ -65,42 +67,10 @@ class AppTheme {
       seedColor: const Color(0xFF6750A4),
     );
 
-    return ThemeData(
-      useMaterial3: true,
+    return _buildTheme(
       colorScheme: colorScheme,
-      extensions: _extensions,
-      textTheme: _buildTextTheme(colorScheme.onSurface),
-      appBarTheme: AppBarTheme(
-        centerTitle: true,
-        backgroundColor: colorScheme.surfaceContainerLow,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 2,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.08),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        color: colorScheme.surfaceContainerLowest,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
+      cardColor: colorScheme.surfaceContainerLowest,
+      cardShadowOpacity: 0.08,
     );
   }
 
@@ -168,6 +138,18 @@ class AppTheme {
       brightness: Brightness.dark,
     );
 
+    return _buildTheme(
+      colorScheme: colorScheme,
+      cardColor: colorScheme.surfaceContainerLow,
+      cardShadowOpacity: 0.2,
+    );
+  }
+
+  static ThemeData _buildTheme({
+    required ColorScheme colorScheme,
+    required Color cardColor,
+    required double cardShadowOpacity,
+  }) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
@@ -182,25 +164,31 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.2),
+        shadowColor: colorScheme.shadow.withValues(alpha: cardShadowOpacity),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
-        color: colorScheme.surfaceContainerLow,
+        color: cardColor,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.l,
+            vertical: AppSpacing.m,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.l),
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.l,
+            vertical: AppSpacing.m,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.l),
           ),
         ),
       ),

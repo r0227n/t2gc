@@ -11,10 +11,24 @@ part of 'app_radius_theme.dart';
 
 mixin _$AppRadiusTheme on ThemeExtension<AppRadiusTheme> {
   @override
-  ThemeExtension<AppRadiusTheme> copyWith({double? xs, double? s}) {
+  ThemeExtension<AppRadiusTheme> copyWith({
+    double? xs,
+    double? s,
+    double? m,
+    double? l,
+    double? xl,
+    double? pill,
+  }) {
     final _this = (this as AppRadiusTheme);
 
-    return AppRadiusTheme(xs: xs ?? _this.xs, s: s ?? _this.s);
+    return AppRadiusTheme(
+      xs: xs ?? _this.xs,
+      s: s ?? _this.s,
+      m: m ?? _this.m,
+      l: l ?? _this.l,
+      xl: xl ?? _this.xl,
+      pill: pill ?? _this.pill,
+    );
   }
 
   @override
@@ -31,6 +45,10 @@ mixin _$AppRadiusTheme on ThemeExtension<AppRadiusTheme> {
     return AppRadiusTheme(
       xs: lerpDouble$(_this.xs, other.xs, t)!,
       s: lerpDouble$(_this.s, other.s, t)!,
+      m: lerpDouble$(_this.m, other.m, t)!,
+      l: lerpDouble$(_this.l, other.l, t)!,
+      xl: lerpDouble$(_this.xl, other.xl, t)!,
+      pill: lerpDouble$(_this.pill, other.pill, t)!,
     );
   }
 
@@ -47,14 +65,27 @@ mixin _$AppRadiusTheme on ThemeExtension<AppRadiusTheme> {
     final _this = (this as AppRadiusTheme);
     final _other = (other as AppRadiusTheme);
 
-    return _other.xs == _this.xs && _other.s == _this.s;
+    return _other.xs == _this.xs &&
+        _other.s == _this.s &&
+        _other.m == _this.m &&
+        _other.l == _this.l &&
+        _other.xl == _this.xl &&
+        _other.pill == _this.pill;
   }
 
   @override
   int get hashCode {
     final _this = (this as AppRadiusTheme);
 
-    return Object.hash(runtimeType, _this.xs, _this.s);
+    return Object.hash(
+      runtimeType,
+      _this.xs,
+      _this.s,
+      _this.m,
+      _this.l,
+      _this.xl,
+      _this.pill,
+    );
   }
 }
 
