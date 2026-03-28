@@ -14,6 +14,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
     required this.onToggleSlot,
     required this.onSelectAllSlots,
     required this.onClearAllSlots,
+    super.key,
   });
 
   /// Parsed OCR result containing the timetable schedules.
@@ -56,9 +57,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               color: scheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(
-                TimetableScanStitchTokens.radiusLg,
-              ),
+              borderRadius: context.timetableScanLargeRadius,
             ),
             child: Padding(
               padding: EdgeInsets.all(spacing.m),
@@ -178,9 +177,7 @@ class _StitchEventRow extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(
-          TimetableScanStitchTokens.radiusLg,
-        ),
+        borderRadius: context.timetableScanLargeRadius,
         boxShadow: TimetableScanStitchTokens.ambientCardShadow(
           scheme.onSurface,
         ),
@@ -306,6 +303,7 @@ class _InfoCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final spacing = context.timetableScanSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -317,7 +315,7 @@ class _InfoCell extends StatelessWidget {
             color: scheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: spacing.xs),
         Text(
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -343,9 +341,7 @@ class _BottomActionBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          TimetableScanStitchTokens.radiusLg,
-        ),
+        borderRadius: context.timetableScanLargeRadius,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -392,7 +388,7 @@ class _BottomActionBar extends StatelessWidget {
             );
             final button = DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: context.timetableScanPillRadius,
                 gradient: TimetableScanStitchTokens.primaryCtaGradient(scheme),
                 boxShadow: TimetableScanStitchTokens.ambientCardShadow(
                   scheme.onSurface,
@@ -401,7 +397,7 @@ class _BottomActionBar extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: context.timetableScanPillRadius,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -416,9 +412,9 @@ class _BottomActionBar extends StatelessWidget {
                     );
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: spacing.l,
+                      vertical: spacing.m,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

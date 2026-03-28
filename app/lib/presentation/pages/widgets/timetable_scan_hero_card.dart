@@ -15,6 +15,7 @@ class TimetableScanHeroCard extends StatelessWidget {
     required this.imageName,
     required this.eventCount,
     required this.onClearImage,
+    super.key,
   });
 
   /// Current OCR/import status.
@@ -43,12 +44,8 @@ class TimetableScanHeroCard extends StatelessWidget {
     final theme = Theme.of(context);
     final spacing = context.timetableScanSpacing;
     final scheme = theme.colorScheme;
-    final outerRadius = BorderRadius.circular(
-      TimetableScanStitchTokens.radiusLg,
-    );
-    final innerRadius = BorderRadius.circular(
-      TimetableScanStitchTokens.radiusInset,
-    );
+    final outerRadius = context.timetableScanLargeRadius;
+    final innerRadius = context.timetableScanSectionRadius;
     final hasImage = imageBytes != null;
 
     return Column(
@@ -60,7 +57,7 @@ class TimetableScanHeroCard extends StatelessWidget {
             borderRadius: outerRadius,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: EdgeInsets.all(spacing.xs),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: innerRadius,
@@ -172,7 +169,7 @@ class TimetableScanHeroCard extends StatelessWidget {
                       children: [
                         DecoratedBox(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: context.timetableScanPillRadius,
                             gradient:
                                 TimetableScanStitchTokens.primaryCtaGradient(
                                   scheme,
@@ -185,12 +182,12 @@ class TimetableScanHeroCard extends StatelessWidget {
                           child: Material(
                             type: MaterialType.transparency,
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: context.timetableScanPillRadius,
                               onTap: isBusy ? null : onInspectOcr,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 28,
-                                  vertical: 14,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: spacing.l,
+                                  vertical: spacing.m,
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,

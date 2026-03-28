@@ -4,9 +4,3 @@ inherit = "core"
 [shell_environment_policy.set]
 ENABLE_EXPERIMENTAL_MCP_CLI = "false"
 ENABLE_TOOL_SEARCH = "true"
-
-[mcp_servers.stitch]
-url = "https://stitch.googleapis.com/mcp"
-
-[mcp_servers.stitch.http_headers]
-"X-Goog-Api-Key" = "AQ.Ab8RN6JW4s4aWODK_5lQYHkEraggtDvHWpeI6mmz1evfVgVnaQ"

@@ -6,12 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 ///
 /// Source: Google Stitch `designTheme.designMd` + namedColors export.
 abstract final class TimetableScanStitchTokens {
-  /// Card corners: `roundedness.lg` (1rem) in Stitch spec.
-  static const double radiusLg = 16;
-
-  /// Nested panels inside an `radiusLg` frame (after 4px inset).
-  static const double radiusInset = 12;
-
   /// `primary_dim` from Stitch named colors (primary CTA gradient end).
   static const Color primaryDim = Color(0xFF3D30D4);
 
@@ -75,16 +69,19 @@ abstract final class TimetableScanStitchTokens {
 
   /// Manrope (display) + Inter (body) text themes over [colorScheme].
   static ThemeData themeOverlay(BuildContext context) {
+    final parent = Theme.of(context);
     final scheme = colorScheme();
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
-      visualDensity: VisualDensity.standard,
-    );
-    final manrope = GoogleFonts.manropeTextTheme(base.textTheme);
+    final manrope = GoogleFonts.manropeTextTheme(parent.textTheme);
     final merged = GoogleFonts.interTextTheme(manrope);
-    return base.copyWith(
+    final overlay = ThemeData.from(
+      colorScheme: scheme,
       textTheme: merged,
+      useMaterial3: true,
+    );
+    return overlay.copyWith(
+      extensions: parent.extensions.values,
+      scaffoldBackgroundColor: scheme.surface,
+      visualDensity: VisualDensity.standard,
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
         foregroundColor: scheme.primary,
@@ -104,15 +101,22 @@ abstract final class TimetableScanStitchTokens {
 
 /// Spacing and radii for timetable scan widgets.
 extension TimetableScanThemeX on BuildContext {
-  /// Spacing tokens; falls back when tests omit [AppSpacingTheme].
+  /// Spacing tokens sourced from the shared design system theme.
   AppSpacingTheme get timetableScanSpacing =>
       Theme.of(this).extension<AppSpacingTheme>() ?? const AppSpacingTheme();
 
+  AppRadiusTheme get _radiusTheme =>
+      Theme.of(this).extension<AppRadiusTheme>() ?? const AppRadiusTheme();
+
   /// Large rounded blocks (hero inset, OCR / warning cards).
   BorderRadius get timetableScanLargeRadius =>
-      BorderRadius.circular(TimetableScanStitchTokens.radiusLg);
+      BorderRadius.circular(_radiusTheme.l);
 
   /// Inset sections (chips row, nested panels).
   BorderRadius get timetableScanSectionRadius =>
-      BorderRadius.circular(TimetableScanStitchTokens.radiusInset);
+      BorderRadius.circular(_radiusTheme.m);
+
+  /// Fully rounded buttons and chips.
+  BorderRadius get timetableScanPillRadius =>
+      BorderRadius.circular(_radiusTheme.pill);
 }

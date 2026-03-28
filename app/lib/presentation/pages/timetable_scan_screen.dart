@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Home screen for the first-launch timetable import experience.
 class TimetableScanScreen extends ConsumerWidget {
   /// Creates the timetable scan screen.
-  const TimetableScanScreen();
+  const TimetableScanScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

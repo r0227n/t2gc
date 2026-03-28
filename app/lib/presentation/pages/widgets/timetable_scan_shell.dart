@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:app/core/gen/slang.g.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Stitch layout: sticky top bar, optional fixed side nav, decorative blurs.
@@ -9,6 +10,7 @@ class TimetableScanShell extends StatelessWidget {
   const TimetableScanShell({
     required this.body,
     this.showSideRail = true,
+    super.key,
   });
 
   /// Main scrollable content (placed beside the rail when [showSideRail]).
@@ -110,6 +112,9 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final spacing =
+        Theme.of(context).extension<AppSpacingTheme>() ??
+        const AppSpacingTheme();
 
     return Material(
       color: scheme.surface,
@@ -117,16 +122,15 @@ class _TopBar extends StatelessWidget {
       child: SizedBox(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: spacing.l),
           child: Row(
             children: [
               Text(
                 'Timetable to Google Calendar',
-                style: textTheme.headlineSmall?.copyWith(
+                style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
                   color: scheme.primary,
-                  fontSize: 22,
                 ),
               ),
               const Spacer(),

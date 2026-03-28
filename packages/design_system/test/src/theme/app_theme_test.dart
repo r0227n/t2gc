@@ -48,6 +48,8 @@ void main() {
 
       expect(radius, isNotNull);
       expect(radius!.s, AppRadius.s);
+      expect(radius.l, AppRadius.l);
+      expect(radius.xl, AppRadius.xl);
     });
 
     test('darkTheme includes AppSpacingTheme extension', () {
@@ -64,6 +66,8 @@ void main() {
 
       expect(radius, isNotNull);
       expect(radius!.s, AppRadius.s);
+      expect(radius.l, AppRadius.l);
+      expect(radius.xl, AppRadius.xl);
     });
   });
 }

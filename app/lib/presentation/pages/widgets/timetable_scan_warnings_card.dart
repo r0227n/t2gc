@@ -7,6 +7,7 @@ class TimetableScanWarningsCard extends StatelessWidget {
   /// Creates the warnings card.
   const TimetableScanWarningsCard({
     required this.warnings,
+    super.key,
   });
 
   /// Parser and validation warnings to surface to the user.
