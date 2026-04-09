@@ -196,6 +196,10 @@ class TranslationsTimetableScanPerformanceListJa {
   String get calendarClientNotConfigured =>
       'Google Calendar のクライアント ID が設定されていません。';
 
+  /// ja: '選択した {count} 件を Google カレンダーに追加しました。'
+  String calendarSyncSucceeded({required Object count}) =>
+      '選択した ${count} 件を Google カレンダーに追加しました。';
+
   /// ja: 'Google カレンダーへの追加に失敗しました: {error}'
   String calendarSyncFailed({required Object error}) =>
       'Google カレンダーへの追加に失敗しました: ${error}';

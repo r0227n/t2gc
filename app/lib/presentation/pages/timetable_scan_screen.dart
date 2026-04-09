@@ -19,6 +19,39 @@ class TimetableScanScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spacing = context.timetableScanSpacing;
+    ref.listen(timetableScanControllerProvider, (previous, next) {
+      final message = next.snackBarMessage;
+      if (message == null || previous?.snackBarSerial == next.snackBarSerial) {
+        return;
+      }
+
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null || !context.mounted) {
+        return;
+      }
+
+      final scheme = Theme.of(context).colorScheme;
+      final isError = next.snackBarIsError;
+      final backgroundColor = isError
+          ? scheme.errorContainer
+          : scheme.primaryContainer;
+      final foregroundColor = isError
+          ? scheme.onErrorContainer
+          : scheme.onPrimaryContainer;
+
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: backgroundColor,
+            content: Text(
+              message,
+              style: TextStyle(color: foregroundColor),
+            ),
+          ),
+        );
+    });
     final scanState = ref.watch(timetableScanControllerProvider);
     final notifier = ref.read(timetableScanControllerProvider.notifier);
     final result = scanState.scanResult;

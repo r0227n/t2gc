@@ -33,6 +33,7 @@
       "addSelectedToGoogleCalendar": "Add selected to Google Calendar",
       "calendarIntegrationComingSoon": "Google Calendar integration ships in a later release.",
       "calendarClientNotConfigured": "The Google Calendar client ID is not configured.",
+      "calendarSyncSucceeded": "Added {count} selected item(s) to Google Calendar.",
       "calendarSyncFailed": "Failed to add events to Google Calendar: {error}",
       "calendarListFailed": "Failed to load Google Calendars: {error}",
       "calendarDestinationLabel": "Destination calendar",

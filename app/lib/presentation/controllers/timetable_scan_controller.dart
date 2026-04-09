@@ -37,6 +37,9 @@ abstract class TimetableScanState with _$TimetableScanState {
     ///
     /// Each checkbox is independent.
     @Default(<int>{}) Set<int> selectedSlotIndices,
+    String? snackBarMessage,
+    @Default(false) bool snackBarIsError,
+    @Default(0) int snackBarSerial,
   }) = _TimetableScanState;
 
   /// Creates the timetable screen state.
@@ -193,6 +196,7 @@ class TimetableScanController extends _$TimetableScanController {
     if (entries.isEmpty) {
       return;
     }
+    final selectedCount = _selectedScheduleCount(result);
 
     try {
       if (state.selectedCalendar != null && state.calendars.isEmpty) {
@@ -209,18 +213,26 @@ class TimetableScanController extends _$TimetableScanController {
             timeZoneId: result.metadata.timeZoneId,
             calendarId: calendarId,
           );
-    } on GoogleCalendarNotConfiguredException {
-      state = state.copyWith(
-        statusMessage:
-            app.t.timetableScan.performanceList.calendarClientNotConfigured,
-      );
-    } on Object catch (error, stackTrace) {
-      _logCalendarSyncFailure(error: error, stackTrace: stackTrace);
-      state = state.copyWith(
-        statusMessage: app.t.timetableScan.performanceList.calendarSyncFailed(
-          error: error,
+      if (_isDisposed) {
+        return;
+      }
+      _pushSnackBar(
+        message: app.t.timetableScan.performanceList.calendarSyncSucceeded(
+          count: selectedCount,
         ),
       );
+    } on GoogleCalendarNotConfiguredException {
+      final message =
+          app.t.timetableScan.performanceList.calendarClientNotConfigured;
+      state = state.copyWith(statusMessage: message);
+      _pushSnackBar(message: message, isError: true);
+    } on Object catch (error, stackTrace) {
+      _logCalendarSyncFailure(error: error, stackTrace: stackTrace);
+      final message = app.t.timetableScan.performanceList.calendarSyncFailed(
+        error: error,
+      );
+      state = state.copyWith(statusMessage: message);
+      _pushSnackBar(message: message, isError: true);
     }
   }
 
@@ -353,6 +365,12 @@ class TimetableScanController extends _$TimetableScanController {
             schedule: result.schedules[index],
           ),
     ];
+  }
+
+  int _selectedScheduleCount(TimetableScanResult result) {
+    return state.selectedSlotIndices.where((index) {
+      return index >= 0 && index < result.schedules.length;
+    }).length;
   }
 
   List<TimetableCalendarEntry> _calendarEntriesForSchedule({
@@ -498,6 +516,20 @@ class TimetableScanController extends _$TimetableScanController {
         library: 'app.google_calendar',
         context: ErrorDescription(message),
       ),
+    );
+  }
+
+  void _pushSnackBar({
+    required String message,
+    bool isError = false,
+  }) {
+    if (_isDisposed) {
+      return;
+    }
+    state = state.copyWith(
+      snackBarMessage: message,
+      snackBarIsError: isError,
+      snackBarSerial: state.snackBarSerial + 1,
     );
   }
 }

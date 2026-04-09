@@ -295,6 +295,13 @@ void main() {
         expect(capturedEntries.first.title, 'COLOR of COLOR ライブ');
         expect(capturedEntries.first.startAt, DateTime(2026, 3, 21, 9, 15));
         expect(capturedEntries.last.title, 'COLOR of COLOR 物販');
+        final state = container.read(timetableScanControllerProvider);
+        expect(
+          state.snackBarMessage,
+          '選択した 1 件を Google カレンダーに追加しました。',
+        );
+        expect(state.snackBarIsError, isFalse);
+        expect(state.snackBarSerial, 1);
       },
     );
 
@@ -335,6 +342,14 @@ void main() {
         expect(
           container.read(timetableScanControllerProvider).statusMessage,
           'Google Calendar のクライアント ID が設定されていません。',
+        );
+        expect(
+          container.read(timetableScanControllerProvider).snackBarMessage,
+          'Google Calendar のクライアント ID が設定されていません。',
+        );
+        expect(
+          container.read(timetableScanControllerProvider).snackBarIsError,
+          isTrue,
         );
       },
     );

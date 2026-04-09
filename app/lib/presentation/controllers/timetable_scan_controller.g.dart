@@ -45,7 +45,7 @@ final class TimetableScanControllerProvider
 }
 
 String _$timetableScanControllerHash() =>
-    r'd4e2676e37a397120e0273d93c6922435d2c7318';
+    r'34cc1fd3679b82ae8aef7bbbc2761d6e917a992a';
 
 /// Controls OCR execution and selection state for the timetable screen.
 

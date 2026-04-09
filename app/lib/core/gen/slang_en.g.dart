@@ -185,6 +185,9 @@ class _TranslationsTimetableScanPerformanceListEn
   String get calendarClientNotConfigured =>
       'The Google Calendar client ID is not configured.';
   @override
+  String calendarSyncSucceeded({required Object count}) =>
+      'Added ${count} selected item(s) to Google Calendar.';
+  @override
   String calendarSyncFailed({required Object error}) =>
       'Failed to add events to Google Calendar: ${error}';
   @override
