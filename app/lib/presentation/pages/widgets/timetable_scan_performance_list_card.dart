@@ -200,9 +200,9 @@ class _StitchEventRow extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final spacing = context.timetableScanSpacing;
-    final liveTime = schedule.performance.timeLabel;
+    final liveTime = schedule.performance.dateTimeLabel;
     final merchTime = schedule.merchandise != null
-        ? schedule.merchandise!.timeLabel
+        ? schedule.merchandise!.dateTimeLabel
         : t.timetableScan.performanceList.notAvailable;
 
     return DecoratedBox(

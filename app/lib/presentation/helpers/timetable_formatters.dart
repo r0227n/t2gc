@@ -47,6 +47,12 @@ extension TimetableMetadataPresentation on TimetableMetadata {
 
 /// Presentation formatting helpers for performance slots.
 extension TimetablePerformanceSlotPresentation on TimetablePerformanceSlot {
+  /// Human-readable date and time label.
+  String get dateTimeLabel {
+    final dateFormatter = DateFormat('yyyy/MM/dd');
+    return '${dateFormatter.format(startAt)} $timeLabel';
+  }
+
   /// Human-readable time label.
   String get timeLabel {
     final formatter = DateFormat('HH:mm');
@@ -62,6 +68,12 @@ extension TimetableMerchandiseSlotPresentation on TimetableMerchandiseSlot {
       : app.t.timetableScan.formatters.merchandiseBooth(
           boothLabel: boothLabel ?? '',
         );
+
+  /// Human-readable date and time label.
+  String get dateTimeLabel {
+    final dateFormatter = DateFormat('yyyy/MM/dd');
+    return '${dateFormatter.format(startAt)} $timeLabel';
+  }
 
   /// Human-readable time label.
   String get timeLabel {
