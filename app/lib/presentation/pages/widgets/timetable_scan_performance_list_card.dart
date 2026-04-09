@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app/core/gen/slang.g.dart';
 import 'package:app/domain/models/google_calendar_summary.dart';
 import 'package:app/domain/models/timetable_artist_schedule.dart';
@@ -58,6 +60,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
     final spacing = context.timetableScanSpacing;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final translations = t;
     final schedules =
         scanResult?.schedules ?? const <TimetableArtistSchedule>[];
     final selectedCount = selectedSlotIndices.length;
@@ -69,7 +72,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
       children: [
         if (schedules.isEmpty)
           Text(
-            t.timetableScan.performanceList.emptyState,
+            translations.timetableScan.performanceList.emptyState,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -89,7 +92,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          t.timetableScan.performanceList.heading,
+                          translations.timetableScan.performanceList.heading,
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             letterSpacing: 2,
@@ -98,7 +101,7 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        t.timetableScan.performanceList.selectAll,
+                        translations.timetableScan.performanceList.selectAll,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -432,64 +435,75 @@ class _BottomActionBar extends StatelessWidget {
                     color: scheme.surfaceContainerHighest,
                     borderRadius: context.timetableScanSectionRadius,
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.all(spacing.s),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.event_available_rounded,
-                          color: scheme.primary,
-                          size: 18,
-                        ),
-                        SizedBox(width: spacing.s),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t
-                                    .timetableScan
-                                    .performanceList
-                                    .calendarDestinationLabel,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: spacing.xs),
-                              Text(
-                                isLoadingCalendars
-                                    ? t
-                                          .timetableScan
-                                          .performanceList
-                                          .loadingCalendars
-                                    : selectedCalendar?.summary ??
-                                          t
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      borderRadius: context.timetableScanSectionRadius,
+                      onTap: isLoadingCalendars
+                          ? null
+                          : () async {
+                              await onSelectCalendar();
+                            },
+                      child: Padding(
+                        padding: EdgeInsets.all(spacing.s),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.event_available_rounded,
+                              color: scheme.primary,
+                              size: 18,
+                            ),
+                            SizedBox(width: spacing.s),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t
+                                        .timetableScan
+                                        .performanceList
+                                        .calendarDestinationLabel,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  SizedBox(height: spacing.xs),
+                                  Text(
+                                    isLoadingCalendars
+                                        ? t
                                               .timetableScan
                                               .performanceList
-                                              .defaultCalendar,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: scheme.onSurface,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                              .loadingCalendars
+                                        : selectedCalendar?.summary ??
+                                              t
+                                                  .timetableScan
+                                                  .performanceList
+                                                  .defaultCalendar,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: scheme.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: spacing.s),
+                            TextButton(
+                              onPressed: isLoadingCalendars
+                                  ? null
+                                  : () async {
+                                      await onSelectCalendar();
+                                    },
+                              child: Text(
+                                t.timetableScan.performanceList.changeCalendar,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: spacing.s),
-                        TextButton(
-                          onPressed: isLoadingCalendars
-                              ? null
-                              : () async {
-                                  await onSelectCalendar();
-                                },
-                          child: Text(
-                            t.timetableScan.performanceList.changeCalendar,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

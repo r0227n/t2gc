@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'dart:ui' show ImageFilter;
 
 import 'package:app/core/gen/slang.g.dart';
+import 'package:app/router/routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
@@ -136,7 +139,9 @@ class _TopBar extends StatelessWidget {
               const Spacer(),
               IconButton(
                 tooltip: t.app.settingsTooltip,
-                onPressed: () {},
+                onPressed: () {
+                  unawaited(const SettingsRoute().push<void>(context));
+                },
                 icon: Icon(Icons.settings_outlined, color: scheme.primary),
               ),
             ],

@@ -62,6 +62,51 @@ class GoogleCalendarService {
 
   Future<void>? _initialization;
 
+  /// Whether the minimum Google OAuth configuration is present.
+  bool get isConfigured => _config.isConfigured;
+
+  /// Whether this platform supports programmatic authentication.
+  bool get supportsAuthenticate => _googleSignIn.supportsAuthenticate();
+
+  /// Emits Google sign-in and sign-out events from the shared auth client.
+  Stream<GoogleSignInAuthenticationEvent> get authenticationEvents =>
+      _googleSignIn.authenticationEvents;
+
+  /// Restores a previously authenticated Google user if possible.
+  Future<GoogleSignInAccount?> restoreAuthenticatedUser() async {
+    if (!_config.isConfigured) {
+      return null;
+    }
+
+    await _ensureInitialized();
+    final lightweightAuthentication = _googleSignIn
+        .attemptLightweightAuthentication();
+    if (lightweightAuthentication == null) {
+      return null;
+    }
+    return lightweightAuthentication;
+  }
+
+  /// Starts an interactive Google OAuth sign-in flow.
+  Future<GoogleSignInAccount> signIn() async {
+    if (!_config.isConfigured) {
+      throw const GoogleCalendarNotConfiguredException();
+    }
+
+    await _ensureInitialized();
+    return _googleSignIn.authenticate(scopeHint: _calendarScopes);
+  }
+
+  /// Disconnects the active Google account.
+  Future<void> signOut() async {
+    if (!_config.isConfigured) {
+      return;
+    }
+
+    await _ensureInitialized();
+    await _googleSignIn.disconnect();
+  }
+
   /// Inserts [entries] into the selected Google calendar.
   Future<void> addEntries({
     required List<TimetableCalendarEntry> entries,

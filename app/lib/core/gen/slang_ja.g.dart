@@ -77,6 +77,9 @@ class TranslationsSettingsJa {
   /// ja: '設定'
   String get title => '設定';
 
+  /// ja: '表示言語'
+  String get displayLanguage => '表示言語';
+
   /// ja: '言語'
   String get language => '言語';
 
@@ -88,6 +91,65 @@ class TranslationsSettingsJa {
 
   /// ja: 'ライセンス'
   String get licenses => 'ライセンス';
+
+  /// ja: '利用中の OSS ライセンスを確認できます'
+  String get licensesDescription => '利用中の OSS ライセンスを確認できます';
+
+  /// ja: 'Google アカウント'
+  String get googleAccount => 'Google アカウント';
+
+  /// ja: 'Google Calendar 追加先'
+  String get googleCalendar => 'Google Calendar 追加先';
+
+  /// ja: 'ログインしていません'
+  String get notSignedIn => 'ログインしていません';
+
+  /// ja: 'ログイン'
+  String get signIn => 'ログイン';
+
+  /// ja: 'ログアウト'
+  String get signOut => 'ログアウト';
+
+  /// ja: '{email} でログイン中'
+  String connectedAs({required Object email}) => '${email} でログイン中';
+
+  /// ja: 'Google 連携に利用するアカウントを設定します'
+  String get signInHint => 'Google 連携に利用するアカウントを設定します';
+
+  /// ja: '先に Google アカウントへログインしてください'
+  String get signInRequired => '先に Google アカウントへログインしてください';
+
+  /// ja: 'カレンダーを選択'
+  String get selectCalendar => 'カレンダーを選択';
+
+  /// ja: '追加先カレンダーが未選択です'
+  String get noCalendarSelected => '追加先カレンダーが未選択です';
+
+  /// ja: '追加先の Google Calendar を選択します'
+  String get calendarHint => '追加先の Google Calendar を選択します';
+
+  /// ja: 'Google Calendar の読み取り権限が必要です'
+  String get calendarAccessRequired => 'Google Calendar の読み取り権限が必要です';
+
+  /// ja: '権限を許可して取得'
+  String get authorizeCalendarAccess => '権限を許可して取得';
+
+  /// ja: 'カレンダー一覧を読み込み中です'
+  String get loadingCalendars => 'カレンダー一覧を読み込み中です';
+
+  /// ja: 'Google OAuth の設定が不足しています'
+  String get oauthConfigurationMissing => 'Google OAuth の設定が不足しています';
+
+  /// ja: 'Dart Define と Google Cloud 側の OAuth クライアント設定が必要です'
+  String get oauthConfigurationHint =>
+      'Dart Define と Google Cloud 側の OAuth クライアント設定が必要です';
+
+  /// ja: 'Google でログイン'
+  String get googleSignInButtonLabel => 'Google でログイン';
+
+  /// ja: 'Google Calendar の取得に失敗しました: {message}'
+  String calendarLoadFailed({required Object message}) =>
+      'Google Calendar の取得に失敗しました: ${message}';
 
   late final TranslationsSettingsSectionsJa sections =
       TranslationsSettingsSectionsJa._(_root);
@@ -124,6 +186,9 @@ class TranslationsSettingsSectionsJa {
 
   /// ja: 'アプリ設定'
   String get appSettings => 'アプリ設定';
+
+  /// ja: 'Google 連携'
+  String get account => 'Google 連携';
 
   /// ja: 'その他'
   String get other => 'その他';
@@ -185,6 +250,16 @@ class TranslationsTimetableScanPerformanceListJa {
   /// ja: '"{eventTitle}" のカレンダーに追加'
   String addingToCalendar({required Object eventTitle}) =>
       '"${eventTitle}" のカレンダーに追加';
+
+  /// ja: 'Google アカウントにログインすると追加先を設定できます。'
+  String get signInRequired => 'Google アカウントにログインすると追加先を設定できます。';
+
+  /// ja: 'Google Calendar の権限を許可すると追加先を選択できます。'
+  String get calendarAuthorizationRequired =>
+      'Google Calendar の権限を許可すると追加先を選択できます。';
+
+  /// ja: '設定画面で追加先カレンダーを選択してください。'
+  String get calendarNotSelected => '設定画面で追加先カレンダーを選択してください。';
 
   /// ja: '選択したイベントを Google カレンダーに追加'
   String get addSelectedToGoogleCalendar => '選択したイベントを Google カレンダーに追加';
