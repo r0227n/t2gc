@@ -7,6 +7,7 @@
 /// - Usecases: Application use cases
 library;
 
+export 'models/google_calendar_summary.dart';
 export 'models/timetable_artist_schedule.dart';
 export 'models/timetable_calendar_entry.dart';
 export 'models/timetable_merchandise_slot.dart';

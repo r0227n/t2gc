@@ -182,14 +182,45 @@ class TranslationsTimetableScanPerformanceListJa {
   /// ja: '{count} 件のイベントを選択中'
   String selectedMany({required Object count}) => '${count} 件のイベントを選択中';
 
-  /// ja: '"Summer Festival 2024" のカレンダーに追加中'
-  String get addingToCalendar => '"Summer Festival 2024" のカレンダーに追加中';
+  /// ja: '"{eventTitle}" のカレンダーに追加'
+  String addingToCalendar({required Object eventTitle}) =>
+      '"${eventTitle}" のカレンダーに追加';
 
   /// ja: '選択したイベントを Google カレンダーに追加'
   String get addSelectedToGoogleCalendar => '選択したイベントを Google カレンダーに追加';
 
   /// ja: 'Google カレンダー連携は次のリリースで対応予定です。'
   String get calendarIntegrationComingSoon => 'Google カレンダー連携は次のリリースで対応予定です。';
+
+  /// ja: 'Google Calendar のクライアント ID が設定されていません。'
+  String get calendarClientNotConfigured =>
+      'Google Calendar のクライアント ID が設定されていません。';
+
+  /// ja: 'Google カレンダーへの追加に失敗しました: {error}'
+  String calendarSyncFailed({required Object error}) =>
+      'Google カレンダーへの追加に失敗しました: ${error}';
+
+  /// ja: 'Google カレンダー一覧の取得に失敗しました: {error}'
+  String calendarListFailed({required Object error}) =>
+      'Google カレンダー一覧の取得に失敗しました: ${error}';
+
+  /// ja: '追加先カレンダー'
+  String get calendarDestinationLabel => '追加先カレンダー';
+
+  /// ja: '変更'
+  String get changeCalendar => '変更';
+
+  /// ja: 'カレンダーを読み込み中…'
+  String get loadingCalendars => 'カレンダーを読み込み中…';
+
+  /// ja: 'メインカレンダー'
+  String get defaultCalendar => 'メインカレンダー';
+
+  /// ja: '追加先カレンダーを選択'
+  String get calendarSelectionTitle => '追加先カレンダーを選択';
+
+  /// ja: '追加可能な Google カレンダーが見つかりませんでした。'
+  String get noWritableCalendars => '追加可能な Google カレンダーが見つかりませんでした。';
 }
 
 // Path: timetableScan.hero

@@ -1,6 +1,10 @@
 import 'package:app/data/models/selected_timetable_image.dart';
+import 'package:app/data/repositories/google_calendar_selection_repository.dart';
+import 'package:app/data/services/google_calendar_service.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/data/services/timetable_ocr_service.dart';
+import 'package:app/domain/models/google_calendar_summary.dart';
+import 'package:app/domain/models/timetable_calendar_entry.dart';
 import 'package:app/presentation/controllers/timetable_scan_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -238,13 +242,235 @@ void main() {
         31,
       );
     });
+
+    test(
+      'adds selected live and merchandise entries to Google Calendar',
+      () async {
+        late List<TimetableCalendarEntry> capturedEntries;
+        late String capturedTimeZoneId;
+
+        final container = _createContainer(
+          imagePickerService: TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: Uint8List.fromList([1, 2, 3]),
+              name: 'fixture.png',
+            ),
+          ),
+          ocrService: TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _ocrResultFixture(),
+          ),
+          googleCalendarService: GoogleCalendarService(
+            addEntriesOverride:
+                ({
+                  required entries,
+                  required timeZoneId,
+                  calendarId,
+                }) async {
+                  capturedEntries = entries;
+                  capturedTimeZoneId = timeZoneId;
+                },
+          ),
+        );
+        addTearDown(container.dispose);
+
+        final subscription = container.listen(
+          timetableScanControllerProvider,
+          (previous, next) {},
+          fireImmediately: true,
+        );
+        addTearDown(subscription.close);
+
+        final notifier = container.read(
+          timetableScanControllerProvider.notifier,
+        );
+        await notifier.inspectFromGallery();
+        await notifier.addSelectedToGoogleCalendar();
+
+        expect(capturedTimeZoneId, 'Asia/Tokyo');
+        expect(capturedEntries, hasLength(2));
+        expect(capturedEntries.first.title, 'COLOR of COLOR ライブ');
+        expect(capturedEntries.first.startAt, DateTime(2026, 3, 21, 9, 15));
+        expect(capturedEntries.last.title, 'COLOR of COLOR 物販');
+      },
+    );
+
+    test(
+      'surfaces a status message when Google Calendar is not configured',
+      () async {
+        final container = _createContainer(
+          imagePickerService: TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: Uint8List.fromList([1, 2, 3]),
+              name: 'fixture.png',
+            ),
+          ),
+          ocrService: TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _ocrResultFixture(),
+          ),
+          googleCalendarService: GoogleCalendarService(),
+        );
+        addTearDown(container.dispose);
+
+        final subscription = container.listen(
+          timetableScanControllerProvider,
+          (previous, next) {},
+          fireImmediately: true,
+        );
+        addTearDown(subscription.close);
+
+        final notifier = container.read(
+          timetableScanControllerProvider.notifier,
+        );
+        await notifier.inspectFromGallery();
+        await notifier.addSelectedToGoogleCalendar();
+
+        expect(
+          container.read(timetableScanControllerProvider).statusMessage,
+          'Google Calendar のクライアント ID が設定されていません。',
+        );
+      },
+    );
+
+    test('loads writable calendars and restores a saved selection', () async {
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+        googleCalendarSelectionRepository:
+            GoogleCalendarSelectionRepositoryFake(
+              selectedCalendar: const GoogleCalendarSummary(
+                id: 'team',
+                summary: 'Team Calendar',
+              ),
+            ),
+        googleCalendarService: GoogleCalendarService(
+          listCalendarsOverride: () async => const [
+            GoogleCalendarSummary(
+              id: 'primary',
+              summary: 'Primary',
+              isPrimary: true,
+            ),
+            GoogleCalendarSummary(
+              id: 'team',
+              summary: 'Team Calendar',
+            ),
+          ],
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        timetableScanControllerProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+
+      final notifier = container.read(timetableScanControllerProvider.notifier);
+      await notifier.loadWritableCalendars();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.calendars, hasLength(2));
+      expect(state.selectedCalendar?.id, 'team');
+      expect(state.isLoadingCalendars, isFalse);
+    });
+
+    test('replaces an unavailable saved calendar with primary', () async {
+      final repository = GoogleCalendarSelectionRepositoryFake(
+        selectedCalendar: const GoogleCalendarSummary(
+          id: 'missing',
+          summary: 'Missing Calendar',
+        ),
+      );
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+        googleCalendarSelectionRepository: repository,
+        googleCalendarService: GoogleCalendarService(
+          listCalendarsOverride: () async => const [
+            GoogleCalendarSummary(
+              id: 'primary',
+              summary: 'Primary',
+              isPrimary: true,
+            ),
+            GoogleCalendarSummary(
+              id: 'team',
+              summary: 'Team Calendar',
+            ),
+          ],
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        timetableScanControllerProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .loadWritableCalendars();
+
+      final state = container.read(timetableScanControllerProvider);
+      expect(state.selectedCalendar?.id, 'primary');
+      expect(repository.selectedCalendar?.id, 'primary');
+    });
+
+    test('persists selected calendar choice', () async {
+      final repository = GoogleCalendarSelectionRepositoryFake();
+      final container = _createContainer(
+        imagePickerService: TimetableImagePickerService(
+          pickImage: () async => null,
+        ),
+        googleCalendarSelectionRepository: repository,
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        timetableScanControllerProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+
+      const calendar = GoogleCalendarSummary(
+        id: 'team',
+        summary: 'Team Calendar',
+      );
+      await container
+          .read(timetableScanControllerProvider.notifier)
+          .selectCalendar(calendar);
+
+      expect(
+        container.read(timetableScanControllerProvider).selectedCalendar?.id,
+        'team',
+      );
+      expect(repository.selectedCalendar?.id, 'team');
+    });
   });
 }
 
 ProviderContainer _createContainer({
   required TimetableImagePickerService imagePickerService,
   TimetableOcrService? ocrService,
+  GoogleCalendarService? googleCalendarService,
+  GoogleCalendarSelectionRepository? googleCalendarSelectionRepository,
 }) {
+  final selectionRepository =
+      googleCalendarSelectionRepository ??
+      GoogleCalendarSelectionRepositoryFake();
+
   return ProviderContainer(
     overrides: [
       timetableImagePickerServiceProvider.overrideWith(
@@ -252,8 +478,33 @@ ProviderContainer _createContainer({
       ),
       if (ocrService != null)
         timetableOcrServiceProvider.overrideWith((ref) => ocrService),
+      if (googleCalendarService != null)
+        googleCalendarServiceProvider.overrideWithValue(googleCalendarService),
+      googleCalendarSelectionRepositoryProvider.overrideWithValue(
+        selectionRepository,
+      ),
     ],
   );
+}
+
+class GoogleCalendarSelectionRepositoryFake
+    implements GoogleCalendarSelectionRepository {
+  GoogleCalendarSelectionRepositoryFake({this.selectedCalendar});
+
+  GoogleCalendarSummary? selectedCalendar;
+
+  @override
+  Future<void> clearSelectedCalendar() async {
+    selectedCalendar = null;
+  }
+
+  @override
+  GoogleCalendarSummary? getSelectedCalendar() => selectedCalendar;
+
+  @override
+  Future<void> setSelectedCalendar(GoogleCalendarSummary calendar) async {
+    selectedCalendar = calendar;
+  }
 }
 
 NdlocrResult _ocrResultFixture() {

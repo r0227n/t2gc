@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:app/core/gen/slang.g.dart' as app;
 import 'package:app/data/models/selected_timetable_image.dart';
+import 'package:app/data/repositories/google_calendar_selection_repository.dart';
+import 'package:app/data/services/google_calendar_service.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
+import 'package:app/domain/models/google_calendar_summary.dart';
+import 'package:app/domain/models/timetable_artist_schedule.dart';
+import 'package:app/domain/models/timetable_calendar_entry.dart';
+import 'package:app/domain/models/timetable_metadata.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/domain/usecases/scan_timetable_image_use_case.dart';
 import 'package:core/core.dart' as core;
@@ -23,6 +29,9 @@ abstract class TimetableScanState with _$TimetableScanState {
     @Default(TimetableScanState.initialStatusMessage) String statusMessage,
     @Default(false) bool isBusy,
     TimetableScanResult? scanResult,
+    @Default(false) bool isLoadingCalendars,
+    @Default(<GoogleCalendarSummary>[]) List<GoogleCalendarSummary> calendars,
+    GoogleCalendarSummary? selectedCalendar,
 
     /// Indices into [scanResult!.schedules] for selected rows.
     ///
@@ -49,9 +58,13 @@ class TimetableScanController extends _$TimetableScanController {
     ref.onDispose(() {
       _isDisposed = true;
     });
+    final selectedCalendar = ref
+        .read(googleCalendarSelectionRepositoryProvider)
+        .getSelectedCalendar();
 
     return TimetableScanState(
       statusMessage: app.t.timetableScan.status.chooseImage,
+      selectedCalendar: selectedCalendar,
     );
   }
 
@@ -125,7 +138,14 @@ class TimetableScanController extends _$TimetableScanController {
   /// Cancels the current OCR flow and clears the selected image and result.
   void clearSelection() {
     _activeInspectionId++;
-    state = const TimetableScanState();
+    state = state.copyWith(
+      imageBytes: null,
+      imageName: '',
+      statusMessage: app.t.timetableScan.status.chooseImage,
+      isBusy: false,
+      scanResult: null,
+      selectedSlotIndices: const <int>{},
+    );
   }
 
   /// Updates whether the schedule at [index] is selected.
@@ -162,6 +182,110 @@ class TimetableScanController extends _$TimetableScanController {
     state = state.copyWith(selectedSlotIndices: const <int>{});
   }
 
+  /// Adds the selected timetable rows to Google Calendar.
+  Future<void> addSelectedToGoogleCalendar() async {
+    final result = state.scanResult;
+    if (result == null) {
+      return;
+    }
+
+    final entries = _selectedCalendarEntries(result);
+    if (entries.isEmpty) {
+      return;
+    }
+
+    try {
+      if (state.selectedCalendar != null && state.calendars.isEmpty) {
+        await loadWritableCalendars();
+        if (_isDisposed) {
+          return;
+        }
+      }
+      final calendarId = state.selectedCalendar?.id;
+      await ref
+          .read(googleCalendarServiceProvider)
+          .addEntries(
+            entries: entries,
+            timeZoneId: result.metadata.timeZoneId,
+            calendarId: calendarId,
+          );
+    } on GoogleCalendarNotConfiguredException {
+      state = state.copyWith(
+        statusMessage:
+            app.t.timetableScan.performanceList.calendarClientNotConfigured,
+      );
+    } on Object catch (error, stackTrace) {
+      _logCalendarSyncFailure(error: error, stackTrace: stackTrace);
+      state = state.copyWith(
+        statusMessage: app.t.timetableScan.performanceList.calendarSyncFailed(
+          error: error,
+        ),
+      );
+    }
+  }
+
+  /// Loads writable calendars from Google Calendar API.
+  Future<void> loadWritableCalendars() async {
+    if (state.isLoadingCalendars) {
+      return;
+    }
+
+    final selectionRepository = ref.read(
+      googleCalendarSelectionRepositoryProvider,
+    );
+    final currentSelection = state.selectedCalendar;
+    state = state.copyWith(isLoadingCalendars: true);
+    try {
+      final calendars = await ref
+          .read(googleCalendarServiceProvider)
+          .listWritableCalendars();
+      if (_isDisposed) {
+        return;
+      }
+      final selectedCalendar = _resolveSelectedCalendar(
+        calendars: calendars,
+        currentSelection: currentSelection,
+      );
+      if (selectedCalendar == null) {
+        await selectionRepository.clearSelectedCalendar();
+      } else if (currentSelection?.id != selectedCalendar.id) {
+        await selectionRepository.setSelectedCalendar(selectedCalendar);
+      }
+
+      state = state.copyWith(
+        calendars: calendars,
+        selectedCalendar: selectedCalendar,
+      );
+    } on GoogleCalendarNotConfiguredException {
+      state = state.copyWith(
+        statusMessage:
+            app.t.timetableScan.performanceList.calendarClientNotConfigured,
+      );
+    } on Object catch (error, stackTrace) {
+      _logCalendarSyncFailure(error: error, stackTrace: stackTrace);
+      state = state.copyWith(
+        statusMessage: app.t.timetableScan.performanceList.calendarListFailed(
+          error: error,
+        ),
+      );
+    } finally {
+      if (!_isDisposed) {
+        state = state.copyWith(isLoadingCalendars: false);
+      }
+    }
+  }
+
+  /// Persists the selected Google Calendar.
+  Future<void> selectCalendar(GoogleCalendarSummary calendar) async {
+    await ref
+        .read(googleCalendarSelectionRepositoryProvider)
+        .setSelectedCalendar(calendar);
+    if (_isDisposed) {
+      return;
+    }
+    state = state.copyWith(selectedCalendar: calendar);
+  }
+
   void _applySelectionCanceledState() {
     state = state.copyWith(
       statusMessage: app.t.timetableScan.status.selectionCanceled,
@@ -192,6 +316,145 @@ class TimetableScanController extends _$TimetableScanController {
     return '$extractedCounts$warningSuffix';
   }
 
+  GoogleCalendarSummary? _resolveSelectedCalendar({
+    required List<GoogleCalendarSummary> calendars,
+    required GoogleCalendarSummary? currentSelection,
+  }) {
+    if (calendars.isEmpty) {
+      return null;
+    }
+
+    if (currentSelection case final selection?) {
+      for (final calendar in calendars) {
+        if (calendar.id == selection.id) {
+          return calendar;
+        }
+      }
+    }
+
+    for (final calendar in calendars) {
+      if (calendar.isPrimary) {
+        return calendar;
+      }
+    }
+
+    return calendars.first;
+  }
+
+  List<TimetableCalendarEntry> _selectedCalendarEntries(
+    TimetableScanResult result,
+  ) {
+    final selectedIndices = state.selectedSlotIndices.toList()..sort();
+    return [
+      for (final index in selectedIndices)
+        if (index >= 0 && index < result.schedules.length)
+          ..._calendarEntriesForSchedule(
+            metadata: result.metadata,
+            schedule: result.schedules[index],
+          ),
+    ];
+  }
+
+  List<TimetableCalendarEntry> _calendarEntriesForSchedule({
+    required TimetableMetadata metadata,
+    required TimetableArtistSchedule schedule,
+  }) {
+    final liveEntry = TimetableCalendarEntry(
+      slotNumber: schedule.slotNumber,
+      artistName: schedule.artistName,
+      type: TimetableCalendarEntryType.live,
+      title:
+          '${schedule.artistName} ${app.t.timetableScan.formatters.liveType}',
+      description: _buildLiveDescription(
+        metadata: metadata,
+        schedule: schedule,
+      ),
+      location: metadata.venueName,
+      startAt: schedule.performance.startAt,
+      endAt: schedule.performance.endAt,
+    );
+
+    final merchandise = schedule.merchandise;
+    if (merchandise == null) {
+      return [liveEntry];
+    }
+
+    return [
+      liveEntry,
+      TimetableCalendarEntry(
+        slotNumber: schedule.slotNumber,
+        artistName: schedule.artistName,
+        type: TimetableCalendarEntryType.merchandise,
+        title:
+            '${schedule.artistName} '
+            '${app.t.timetableScan.formatters.merchandiseType}',
+        description: _buildMerchandiseDescription(
+          metadata: metadata,
+          schedule: schedule,
+        ),
+        location: _merchandiseLocation(
+          venueName: metadata.venueName,
+          boothLabel: merchandise.boothLabel,
+          isAfterShow: merchandise.isAfterShow,
+        ),
+        startAt: merchandise.startAt,
+        endAt: merchandise.endAt,
+      ),
+    ];
+  }
+
+  String _buildLiveDescription({
+    required TimetableMetadata metadata,
+    required TimetableArtistSchedule schedule,
+  }) {
+    final merchandiseText = switch (schedule.merchandise) {
+      final merchandise? => merchandise.sourceText,
+      null => app.t.timetableScan.performanceList.notAvailable,
+    };
+    return [
+      metadata.eventTitle,
+      schedule.performance.sourceText,
+      merchandiseText,
+    ].join('\n');
+  }
+
+  String _buildMerchandiseDescription({
+    required TimetableMetadata metadata,
+    required TimetableArtistSchedule schedule,
+  }) {
+    final merchandise = schedule.merchandise;
+    if (merchandise == null) {
+      return [
+        metadata.eventTitle,
+        schedule.performance.sourceText,
+      ].join('\n');
+    }
+
+    return [
+      metadata.eventTitle,
+      schedule.performance.sourceText,
+      merchandise.sourceText,
+    ].join('\n');
+  }
+
+  String _merchandiseLocation({
+    required String venueName,
+    required String? boothLabel,
+    required bool isAfterShow,
+  }) {
+    if (isAfterShow) {
+      return '$venueName '
+          '${app.t.timetableScan.formatters.afterShowMerchandise}';
+    }
+    if (boothLabel == null || boothLabel.isEmpty) {
+      return venueName;
+    }
+    return '$venueName '
+        '${app.t.timetableScan.formatters.merchandiseBooth(
+          boothLabel: boothLabel,
+        )}';
+  }
+
   void _logOcrFailure({
     required String imageName,
     required Object error,
@@ -211,6 +474,28 @@ class TimetableScanController extends _$TimetableScanController {
         exception: error,
         stack: stackTrace,
         library: 'app.timetable_scan',
+        context: ErrorDescription(message),
+      ),
+    );
+  }
+
+  void _logCalendarSyncFailure({
+    required Object error,
+    required StackTrace stackTrace,
+  }) {
+    const message =
+        'Failed to add selected timetable events to Google Calendar.';
+
+    if (core.AppLogger.isInitialized) {
+      ref.read(core.appLoggerProvider).error(message, error, stackTrace);
+      return;
+    }
+
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'app.google_calendar',
         context: ErrorDescription(message),
       ),
     );

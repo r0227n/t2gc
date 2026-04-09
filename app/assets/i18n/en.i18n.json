@@ -29,9 +29,18 @@
       "editingComingSoon": "Editing is coming soon.",
       "selectedOne": "1 Event Selected",
       "selectedMany": "{count} Events Selected",
-      "addingToCalendar": "Adding to \"Summer Festival 2024\" calendar",
+      "addingToCalendar": "Adding to \"{eventTitle}\" calendar",
       "addSelectedToGoogleCalendar": "Add selected to Google Calendar",
-      "calendarIntegrationComingSoon": "Google Calendar integration ships in a later release."
+      "calendarIntegrationComingSoon": "Google Calendar integration ships in a later release.",
+      "calendarClientNotConfigured": "The Google Calendar client ID is not configured.",
+      "calendarSyncFailed": "Failed to add events to Google Calendar: {error}",
+      "calendarListFailed": "Failed to load Google Calendars: {error}",
+      "calendarDestinationLabel": "Destination calendar",
+      "changeCalendar": "Change",
+      "loadingCalendars": "Loading calendars…",
+      "defaultCalendar": "Primary calendar",
+      "calendarSelectionTitle": "Choose a calendar",
+      "noWritableCalendars": "No writable Google Calendars were found."
     },
     "hero": {
       "selectedImagePreview": "Selected image preview",
