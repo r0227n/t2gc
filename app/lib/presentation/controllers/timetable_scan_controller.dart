@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app/core/gen/slang.g.dart' as app;
+import 'package:app/data/models/selected_timetable_image.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/domain/usecases/scan_timetable_image_use_case.dart';
@@ -65,6 +66,11 @@ class TimetableScanController extends _$TimetableScanController {
       return;
     }
 
+    await inspectImage(image);
+  }
+
+  /// Runs OCR against an already selected image payload.
+  Future<void> inspectImage(SelectedTimetableImage image) async {
     final inspectionId = ++_activeInspectionId;
 
     state = state.copyWith(
