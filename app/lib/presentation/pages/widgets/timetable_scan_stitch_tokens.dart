@@ -67,9 +67,8 @@ abstract final class TimetableScanStitchTokens {
     );
   }
 
-  /// Manrope (display) + Inter (body) text themes over [colorScheme].
-  static ThemeData themeOverlay(BuildContext context) {
-    final parent = Theme.of(context);
+  /// Manrope (display) + Inter (body) text themes over [parent].
+  static ThemeData appTheme(ThemeData parent) {
     final scheme = colorScheme();
     final manrope = GoogleFonts.manropeTextTheme(parent.textTheme);
     final merged = GoogleFonts.interTextTheme(manrope);

@@ -56,8 +56,6 @@ class TimetableScanScreen extends ConsumerWidget {
     final notifier = ref.read(timetableScanControllerProvider.notifier);
     final result = scanState.scanResult;
 
-    final stitchTheme = TimetableScanStitchTokens.themeOverlay(context);
-
     final parsedResult = result;
 
     final resultsSection = <Widget>[
@@ -117,50 +115,44 @@ class TimetableScanScreen extends ConsumerWidget {
       ]);
     }
 
-    return Theme(
-      data: stitchTheme,
-      child: Scaffold(
-        backgroundColor: stitchTheme.colorScheme.surface,
-        body: TimetableScanShell(
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isMobile = constraints.maxWidth >= 960;
-                final horizontal = isMobile
-                    ? spacing.xl + spacing.m
-                    : spacing.m;
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontal,
-                    spacing.m,
-                    horizontal,
-                    spacing.xl + spacing.m,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: spacing.l,
-                        children: [
-                          TimetableScanHeroCard(
-                            statusMessage: scanState.statusMessage,
-                            isBusy: scanState.isBusy,
-                            onInspectOcr: notifier.inspectFromGallery,
-                            onInspectDroppedImage: notifier.inspectImage,
-                            onClearImage: notifier.clearSelection,
-                            imageBytes: scanState.imageBytes,
-                            imageName: scanState.imageName,
-                            eventCount: parsedResult?.schedules.length,
-                          ),
-                          ...resultsSection,
-                        ],
-                      ),
+    return Scaffold(
+      body: TimetableScanShell(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth >= 960;
+              final horizontal = isMobile ? spacing.xl + spacing.m : spacing.m;
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  spacing.m,
+                  horizontal,
+                  spacing.xl + spacing.m,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: spacing.l,
+                      children: [
+                        TimetableScanHeroCard(
+                          statusMessage: scanState.statusMessage,
+                          isBusy: scanState.isBusy,
+                          onInspectOcr: notifier.inspectFromGallery,
+                          onInspectDroppedImage: notifier.inspectImage,
+                          onClearImage: notifier.clearSelection,
+                          imageBytes: scanState.imageBytes,
+                          imageName: scanState.imageName,
+                          eventCount: parsedResult?.schedules.length,
+                        ),
+                        ...resultsSection,
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

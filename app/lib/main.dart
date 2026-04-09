@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app/core/gen/slang.g.dart' as app;
+import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:app/router/app_router.dart';
 import 'package:core/core.dart' as core;
 import 'package:design_system/design_system.dart';
@@ -108,8 +109,8 @@ class MyApp extends ConsumerWidget {
         (locale) => locale.flutterLocale,
       ),
       locale: locale,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: TimetableScanStitchTokens.appTheme(AppTheme.lightTheme),
+      darkTheme: TimetableScanStitchTokens.appTheme(AppTheme.darkTheme),
       themeMode: switch (themeMode) {
         AsyncData(value: final mode) => mode,
         _ => ThemeMode.system,
