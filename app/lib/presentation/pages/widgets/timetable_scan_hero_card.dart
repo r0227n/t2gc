@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:app/core/gen/slang.g.dart';
 import 'package:app/data/models/selected_timetable_image.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
+import 'package:design_system/design_system.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 
@@ -103,7 +103,7 @@ class _TimetableScanHeroCardState extends State<TimetableScanHeroCard> {
                     color: dropBorderColor,
                     width: _isDragging ? 2 : 0,
                   ),
-                  boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+                  boxShadow: TimetableScanTheme.ambientCardShadow(
                     scheme.onSurface,
                   ),
                 ),
@@ -211,14 +211,12 @@ class _TimetableScanHeroCardState extends State<TimetableScanHeroCard> {
                           DecoratedBox(
                             decoration: BoxDecoration(
                               borderRadius: context.timetableScanPillRadius,
-                              gradient:
-                                  TimetableScanStitchTokens.primaryCtaGradient(
-                                    scheme,
-                                  ),
-                              boxShadow:
-                                  TimetableScanStitchTokens.ambientCardShadow(
-                                    scheme.onSurface,
-                                  ),
+                              gradient: TimetableScanTheme.primaryCtaGradient(
+                                scheme,
+                              ),
+                              boxShadow: TimetableScanTheme.ambientCardShadow(
+                                scheme.onSurface,
+                              ),
                             ),
                             child: Material(
                               type: MaterialType.transparency,

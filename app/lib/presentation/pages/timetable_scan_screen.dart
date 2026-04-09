@@ -5,9 +5,9 @@ import 'package:app/presentation/pages/widgets/timetable_scan_hero_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_ocr_debug_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_performance_list_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_shell.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_warnings_card.dart';
 import 'package:core/core.dart' as core;
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

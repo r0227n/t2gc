@@ -5,7 +5,7 @@ import 'package:app/domain/models/google_calendar_summary.dart';
 import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/presentation/helpers/timetable_formatters.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Stitch verify layout: editorial rows, left accent bar, row checkboxes.
@@ -209,7 +209,7 @@ class _StitchEventRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLowest,
         borderRadius: context.timetableScanLargeRadius,
-        boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+        boxShadow: TimetableScanTheme.ambientCardShadow(
           scheme.onSurface,
         ),
       ),
@@ -393,7 +393,7 @@ class _BottomActionBar extends StatelessWidget {
             scheme.surfaceContainer,
           ],
         ),
-        boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+        boxShadow: TimetableScanTheme.ambientCardShadow(
           scheme.onSurface,
         ),
       ),
@@ -515,10 +515,10 @@ class _BottomActionBar extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: context.timetableScanPillRadius,
-                  gradient: TimetableScanStitchTokens.primaryCtaGradient(
+                  gradient: TimetableScanTheme.primaryCtaGradient(
                     scheme,
                   ),
-                  boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+                  boxShadow: TimetableScanTheme.ambientCardShadow(
                     scheme.onSurface,
                   ),
                 ),
