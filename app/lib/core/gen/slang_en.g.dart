@@ -77,6 +77,8 @@ class _TranslationsSettingsEn implements TranslationsSettingsJa {
   @override
   String get title => 'Settings';
   @override
+  String get displayLanguage => 'Display language';
+  @override
   String get language => 'Language';
   @override
   String get theme => 'Theme';
@@ -84,6 +86,50 @@ class _TranslationsSettingsEn implements TranslationsSettingsJa {
   String get version => 'Version';
   @override
   String get licenses => 'Licenses';
+  @override
+  String get licensesDescription =>
+      'Review open source licenses used in the app';
+  @override
+  String get googleAccount => 'Google Account';
+  @override
+  String get googleCalendar => 'Google Calendar destination';
+  @override
+  String get notSignedIn => 'Not signed in';
+  @override
+  String get signIn => 'Sign in';
+  @override
+  String get signOut => 'Sign out';
+  @override
+  String connectedAs({required Object email}) => 'Signed in as ${email}';
+  @override
+  String get signInHint =>
+      'Choose the Google account used for calendar integration';
+  @override
+  String get signInRequired => 'Sign in to a Google account first';
+  @override
+  String get selectCalendar => 'Select calendar';
+  @override
+  String get noCalendarSelected => 'No destination calendar selected';
+  @override
+  String get calendarHint => 'Choose where imported events will be added';
+  @override
+  String get calendarAccessRequired =>
+      'Google Calendar read access is required';
+  @override
+  String get authorizeCalendarAccess => 'Authorize and load calendars';
+  @override
+  String get loadingCalendars => 'Loading calendars...';
+  @override
+  String get oauthConfigurationMissing =>
+      'Google OAuth configuration is incomplete';
+  @override
+  String get oauthConfigurationHint =>
+      'Provide Dart defines and matching Google Cloud OAuth client settings';
+  @override
+  String get googleSignInButtonLabel => 'Sign in with Google';
+  @override
+  String calendarLoadFailed({required Object message}) =>
+      'Failed to load Google Calendar: ${message}';
   @override
   late final _TranslationsSettingsSectionsEn sections =
       _TranslationsSettingsSectionsEn._(_root);
@@ -126,6 +172,8 @@ class _TranslationsSettingsSectionsEn
   // Translations
   @override
   String get appSettings => 'App Settings';
+  @override
+  String get account => 'Google Integration';
   @override
   String get other => 'Other';
 }
@@ -176,6 +224,15 @@ class _TranslationsTimetableScanPerformanceListEn
   @override
   String addingToCalendar({required Object eventTitle}) =>
       'Adding to "${eventTitle}" calendar';
+  @override
+  String get signInRequired =>
+      'Sign in to Google to configure a destination calendar.';
+  @override
+  String get calendarAuthorizationRequired =>
+      'Authorize Google Calendar access to choose a destination.';
+  @override
+  String get calendarNotSelected =>
+      'Choose a destination calendar in Settings.';
   @override
   String get addSelectedToGoogleCalendar => 'Add selected to Google Calendar';
   @override

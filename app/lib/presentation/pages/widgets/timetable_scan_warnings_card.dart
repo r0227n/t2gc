@@ -1,5 +1,5 @@
 import 'package:app/core/gen/slang.g.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Parser warnings (Stitch: inline alert surface).

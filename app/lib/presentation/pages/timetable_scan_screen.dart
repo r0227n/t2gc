@@ -5,9 +5,9 @@ import 'package:app/presentation/pages/widgets/timetable_scan_hero_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_ocr_debug_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_performance_list_card.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_shell.dart';
-import 'package:app/presentation/pages/widgets/timetable_scan_stitch_tokens.dart';
 import 'package:app/presentation/pages/widgets/timetable_scan_warnings_card.dart';
 import 'package:core/core.dart' as core;
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,8 +55,6 @@ class TimetableScanScreen extends ConsumerWidget {
     final scanState = ref.watch(timetableScanControllerProvider);
     final notifier = ref.read(timetableScanControllerProvider.notifier);
     final result = scanState.scanResult;
-
-    final stitchTheme = TimetableScanStitchTokens.themeOverlay(context);
 
     final parsedResult = result;
 
@@ -117,50 +115,44 @@ class TimetableScanScreen extends ConsumerWidget {
       ]);
     }
 
-    return Theme(
-      data: stitchTheme,
-      child: Scaffold(
-        backgroundColor: stitchTheme.colorScheme.surface,
-        body: TimetableScanShell(
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isMobile = constraints.maxWidth >= 960;
-                final horizontal = isMobile
-                    ? spacing.xl + spacing.m
-                    : spacing.m;
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontal,
-                    spacing.m,
-                    horizontal,
-                    spacing.xl + spacing.m,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1040),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: spacing.l,
-                        children: [
-                          TimetableScanHeroCard(
-                            statusMessage: scanState.statusMessage,
-                            isBusy: scanState.isBusy,
-                            onInspectOcr: notifier.inspectFromGallery,
-                            onInspectDroppedImage: notifier.inspectImage,
-                            onClearImage: notifier.clearSelection,
-                            imageBytes: scanState.imageBytes,
-                            imageName: scanState.imageName,
-                            eventCount: parsedResult?.schedules.length,
-                          ),
-                          ...resultsSection,
-                        ],
-                      ),
+    return Scaffold(
+      body: TimetableScanShell(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth >= 960;
+              final horizontal = isMobile ? spacing.xl + spacing.m : spacing.m;
+              return SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  spacing.m,
+                  horizontal,
+                  spacing.xl + spacing.m,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1040),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: spacing.l,
+                      children: [
+                        TimetableScanHeroCard(
+                          statusMessage: scanState.statusMessage,
+                          isBusy: scanState.isBusy,
+                          onInspectOcr: notifier.inspectFromGallery,
+                          onInspectDroppedImage: notifier.inspectImage,
+                          onClearImage: notifier.clearSelection,
+                          imageBytes: scanState.imageBytes,
+                          imageName: scanState.imageName,
+                          eventCount: parsedResult?.schedules.length,
+                        ),
+                        ...resultsSection,
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

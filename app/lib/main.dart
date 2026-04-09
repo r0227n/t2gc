@@ -108,8 +108,8 @@ class MyApp extends ConsumerWidget {
         (locale) => locale.flutterLocale,
       ),
       locale: locale,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: TimetableScanTheme.appTheme(AppTheme.lightTheme),
+      darkTheme: TimetableScanTheme.appTheme(AppTheme.darkTheme),
       themeMode: switch (themeMode) {
         AsyncData(value: final mode) => mode,
         _ => ThemeMode.system,
