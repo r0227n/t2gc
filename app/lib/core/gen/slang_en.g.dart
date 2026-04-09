@@ -174,12 +174,37 @@ class _TranslationsTimetableScanPerformanceListEn
   @override
   String selectedMany({required Object count}) => '${count} Events Selected';
   @override
-  String get addingToCalendar => 'Adding to "Summer Festival 2024" calendar';
+  String addingToCalendar({required Object eventTitle}) =>
+      'Adding to "${eventTitle}" calendar';
   @override
   String get addSelectedToGoogleCalendar => 'Add selected to Google Calendar';
   @override
   String get calendarIntegrationComingSoon =>
       'Google Calendar integration ships in a later release.';
+  @override
+  String get calendarClientNotConfigured =>
+      'The Google Calendar client ID is not configured.';
+  @override
+  String calendarSyncSucceeded({required Object count}) =>
+      'Added ${count} selected item(s) to Google Calendar.';
+  @override
+  String calendarSyncFailed({required Object error}) =>
+      'Failed to add events to Google Calendar: ${error}';
+  @override
+  String calendarListFailed({required Object error}) =>
+      'Failed to load Google Calendars: ${error}';
+  @override
+  String get calendarDestinationLabel => 'Destination calendar';
+  @override
+  String get changeCalendar => 'Change';
+  @override
+  String get loadingCalendars => 'Loading calendars…';
+  @override
+  String get defaultCalendar => 'Primary calendar';
+  @override
+  String get calendarSelectionTitle => 'Choose a calendar';
+  @override
+  String get noWritableCalendars => 'No writable Google Calendars were found.';
 }
 
 // Path: timetableScan.hero

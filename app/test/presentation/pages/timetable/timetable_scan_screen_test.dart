@@ -1,32 +1,32 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:app/core/gen/slang.g.dart' as app_i18n;
 import 'package:app/data/models/selected_timetable_image.dart';
+import 'package:app/data/services/google_calendar_service.dart';
 import 'package:app/data/services/timetable_image_picker_service.dart';
 import 'package:app/data/services/timetable_ocr_service.dart';
 import 'package:app/presentation/pages/timetable_scan_screen.dart';
+import 'package:core/core.dart' as core;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ndlocr_lite_flutter/ndlocr_lite_flutter.dart';
+// Riverpod does not publicly export Override, but ProviderScope test helpers
+// need the type for override lists in this file.
+// ignore: depend_on_referenced_packages
+import 'package:riverpod/src/framework.dart' show Override;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('renders the empty timetable state before OCR', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: TimetableScanScreen(),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await _pumpTimetableScanScreen(tester);
+    await _pumpUi(tester);
 
-    expect(find.text('Browse Files'), findsOneWidget);
-    expect(find.text('Verify extracted events'), findsNothing);
+    expect(find.text('ファイルを選択'), findsOneWidget);
+    expect(find.text('イベント詳細'), findsNothing);
     expect(
-      find.text(
-        'Detected events will appear here once a timetable is scanned.',
-      ),
+      find.text('タイムテーブルを読み込むと検出されたイベントがここに表示されます。'),
       findsOneWidget,
     );
     expect(find.textContaining('COLOR of COLOR'), findsNothing);
@@ -36,8 +36,293 @@ void main() {
   testWidgets('renders parsed timetable data from provider state', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      ProviderScope(
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'fixture.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _ocrResultFixture(),
+          ),
+        ),
+      ],
+    );
+    await tester.tap(find.text('ファイルを選択'));
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
+      findsOneWidget,
+    );
+    expect(find.text('fixture.png'), findsOneWidget);
+    expect(find.text('09:15〜09:35'), findsWidgets);
+    expect(find.text('09:50〜11:10'), findsWidgets);
+    expect(find.text('OCR デバッグテキスト'), findsOneWidget);
+  });
+
+  testWidgets('shows selected image before OCR completes', (tester) async {
+    final completer = Completer<NdlocrResult>();
+
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'pending.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) => completer.future,
+          ),
+        ),
+      ],
+    );
+    await _pumpUi(tester);
+
+    await tester.tap(find.text('ファイルを選択'));
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
+      findsOneWidget,
+    );
+    expect(find.text('pending.png'), findsOneWidget);
+    expect(find.text('解析中…'), findsOneWidget);
+    expect(find.text('イベント詳細'), findsNothing);
+
+    completer.complete(_ocrResultFixture());
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
+  });
+
+  testWidgets('clear button cancels OCR and hides selected image details', (
+    tester,
+  ) async {
+    final completer = Completer<NdlocrResult>();
+
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'cancel-me.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) => completer.future,
+          ),
+        ),
+      ],
+    );
+    await _pumpUi(tester);
+
+    await tester.tap(find.text('ファイルを選択'));
+    await tester.pump();
+
+    expect(find.text('cancel-me.png'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
+    );
+    await _pumpUi(tester);
+
+    expect(
+      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
+      findsNothing,
+    );
+    expect(find.text('cancel-me.png'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
+      findsNothing,
+    );
+    expect(find.text('ファイルを選択'), findsOneWidget);
+    expect(find.text('イベント詳細'), findsNothing);
+
+    completer.complete(_ocrResultFixture());
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsNothing);
+    expect(
+      find.text('画像を選択すると OCR 抽出を開始します。'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('row checkboxes control selection counts', (tester) async {
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'fixture.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _attachedSampleOcrResultFixture(),
+          ),
+        ),
+      ],
+    );
+    await _pumpUi(tester);
+
+    await tester.tap(find.text('ファイルを選択'));
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('artist-schedule-28')), findsOneWidget);
+
+    Checkbox rowCheckbox(int slot) => tester.widget<Checkbox>(
+      find.byKey(ValueKey('event-row-checkbox-$slot')),
+    );
+
+    expect(rowCheckbox(1).value, isTrue);
+    expect(rowCheckbox(2).value, isTrue);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('event-row-checkbox-1')),
+    );
+    await tester.tap(find.byKey(const ValueKey('event-row-checkbox-1')));
+    await _pumpUi(tester);
+
+    expect(rowCheckbox(1).value, isFalse);
+    expect(rowCheckbox(2).value, isTrue);
+    expect(find.text('30 件のイベントを選択中'), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('select-all-slots-checkbox')),
+    );
+    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
+    await _pumpUi(tester);
+
+    expect(rowCheckbox(1).value, isTrue);
+    expect(find.text('31 件のイベントを選択中'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
+    await _pumpUi(tester);
+
+    expect(rowCheckbox(1).value, isFalse);
+    expect(find.text('0 件のイベントを選択中'), findsOneWidget);
+  });
+
+  testWidgets('shows warnings for partial merchandise sample', (tester) async {
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'partial.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _partialMerchandiseOcrResultFixture(),
+          ),
+        ),
+      ],
+    );
+    await _pumpUi(tester);
+
+    await tester.tap(find.text('ファイルを選択'));
+    await _pumpUi(tester);
+
+    expect(find.text('要確認'), findsOneWidget);
+    expect(find.text('2 件の特典会時間を取得できませんでした。'), findsOneWidget);
+    expect(find.text('N/A'), findsNWidgets(2));
+  });
+
+  testWidgets('shows error status for simulated OCR failure', (tester) async {
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (details) {};
+    addTearDown(() {
+      FlutterError.onError = originalOnError;
+    });
+
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'failure.png',
+            ),
+          ),
+        ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async =>
+                    throw StateError('Failed to initialize the OCR engine.'),
+          ),
+        ),
+      ],
+    );
+    await _pumpUi(tester);
+
+    await tester.tap(find.text('ファイルを選択'));
+    await _pumpUi(tester);
+
+    expect(find.textContaining('OCR に失敗しました:'), findsOneWidget);
+  });
+
+  testWidgets(
+    'shows a success snackbar after adding events to Google Calendar',
+    (
+      tester,
+    ) async {
+      await _pumpTimetableScanScreen(
+        tester,
         overrides: [
           timetableImagePickerServiceProvider.overrideWith(
             (ref) => TimetableImagePickerService(
@@ -56,290 +341,123 @@ void main() {
                   }) async => _ocrResultFixture(),
             ),
           ),
-        ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
-        ),
-      ),
-    );
-    await tester.tap(find.text('Browse Files'));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
-      findsOneWidget,
-    );
-    expect(find.text('fixture.png'), findsOneWidget);
-    expect(find.text('09:15〜09:35'), findsWidgets);
-    expect(find.text('09:50〜11:10'), findsWidgets);
-    expect(find.text('OCR debug text'), findsOneWidget);
-  });
-
-  testWidgets('shows selected image before OCR completes', (tester) async {
-    final completer = Completer<NdlocrResult>();
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          timetableImagePickerServiceProvider.overrideWith(
-            (ref) => TimetableImagePickerService(
-              pickImage: () async => SelectedTimetableImage(
-                bytes: _validImageBytes(),
-                name: 'pending.png',
-              ),
-            ),
-          ),
-          timetableOcrServiceProvider.overrideWith(
-            (ref) => TimetableOcrService(
-              recognizeImage:
+          googleCalendarServiceProvider.overrideWith(
+            (ref) => GoogleCalendarService(
+              addEntriesOverride:
                   ({
-                    required imageBytes,
-                    required imageName,
-                  }) => completer.future,
+                    required entries,
+                    required timeZoneId,
+                    calendarId,
+                  }) async {},
             ),
           ),
         ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await _pumpUi(tester);
 
-    await tester.tap(find.text('Browse Files'));
-    await tester.pump();
+      await tester.tap(find.text('ファイルを選択'));
+      await _pumpUi(tester);
+      await tester.ensureVisible(
+        find.text('選択したイベントを Google カレンダーに追加'),
+      );
+      await tester.tap(find.text('選択したイベントを Google カレンダーに追加'));
+      await _pumpUi(tester);
 
-    expect(
-      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
-      findsOneWidget,
-    );
-    expect(find.text('pending.png'), findsOneWidget);
-    expect(find.text('Analyzing…'), findsOneWidget);
-    expect(find.text('Verify extracted events'), findsNothing);
+      expect(
+        find.text('選択した 1 件を Google カレンダーに追加しました。'),
+        findsOneWidget,
+      );
+      expect(find.byType(SnackBar), findsOneWidget);
+    },
+  );
 
-    completer.complete(_ocrResultFixture());
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
-  });
-
-  testWidgets('clear button cancels OCR and hides selected image details', (
+  testWidgets('shows an error snackbar when Google Calendar sync fails', (
     tester,
   ) async {
-    final completer = Completer<NdlocrResult>();
+    if (!core.AppLogger.isInitialized) {
+      core.AppLogger.initialize(core.LoggerConfig.development());
+    }
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          timetableImagePickerServiceProvider.overrideWith(
-            (ref) => TimetableImagePickerService(
-              pickImage: () async => SelectedTimetableImage(
-                bytes: _validImageBytes(),
-                name: 'cancel-me.png',
-              ),
+    await _pumpTimetableScanScreen(
+      tester,
+      overrides: [
+        timetableImagePickerServiceProvider.overrideWith(
+          (ref) => TimetableImagePickerService(
+            pickImage: () async => SelectedTimetableImage(
+              bytes: _validImageBytes(),
+              name: 'fixture.png',
             ),
           ),
-          timetableOcrServiceProvider.overrideWith(
-            (ref) => TimetableOcrService(
-              recognizeImage:
-                  ({
-                    required imageBytes,
-                    required imageName,
-                  }) => completer.future,
-            ),
-          ),
-        ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Browse Files'));
-    await tester.pump();
-
-    expect(find.text('cancel-me.png'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
-      findsOneWidget,
-    );
-
-    await tester.tap(
-      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey('timetable-scan-hero-selected-image')),
-      findsNothing,
-    );
-    expect(find.text('cancel-me.png'), findsNothing);
-    expect(
-      find.byKey(const ValueKey('timetable-scan-hero-clear-image-button')),
-      findsNothing,
-    );
-    expect(find.text('Browse Files'), findsOneWidget);
-    expect(find.text('Verify extracted events'), findsNothing);
-
-    completer.complete(_ocrResultFixture());
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsNothing);
-    expect(
-      find.text('Choose an image to start OCR extraction.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('row checkboxes control selection counts', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          timetableImagePickerServiceProvider.overrideWith(
-            (ref) => TimetableImagePickerService(
-              pickImage: () async => SelectedTimetableImage(
-                bytes: _validImageBytes(),
-                name: 'fixture.png',
-              ),
-            ),
+        timetableOcrServiceProvider.overrideWith(
+          (ref) => TimetableOcrService(
+            recognizeImage:
+                ({
+                  required imageBytes,
+                  required imageName,
+                }) async => _ocrResultFixture(),
           ),
-          timetableOcrServiceProvider.overrideWith(
-            (ref) => TimetableOcrService(
-              recognizeImage:
-                  ({
-                    required imageBytes,
-                    required imageName,
-                  }) async => _attachedSampleOcrResultFixture(),
-            ),
-          ),
-        ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
         ),
-      ),
+        googleCalendarServiceProvider.overrideWith(
+          (ref) => GoogleCalendarService(
+            addEntriesOverride:
+                ({
+                  required entries,
+                  required timeZoneId,
+                  calendarId,
+                }) async => throw StateError('boom'),
+          ),
+        ),
+      ],
     );
-    await tester.pumpAndSettle();
+    await _pumpUi(tester);
 
-    await tester.tap(find.text('Browse Files'));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('artist-schedule-1')), findsOneWidget);
-    expect(find.byKey(const ValueKey('artist-schedule-28')), findsOneWidget);
-
-    Checkbox rowCheckbox(int slot) => tester.widget<Checkbox>(
-      find.byKey(ValueKey('event-row-checkbox-$slot')),
-    );
-
-    expect(rowCheckbox(1).value, isTrue);
-    expect(rowCheckbox(2).value, isTrue);
-
+    await tester.tap(find.text('ファイルを選択'));
+    await _pumpUi(tester);
     await tester.ensureVisible(
-      find.byKey(const ValueKey('event-row-checkbox-1')),
+      find.text('選択したイベントを Google カレンダーに追加'),
     );
-    await tester.tap(find.byKey(const ValueKey('event-row-checkbox-1')));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('選択したイベントを Google カレンダーに追加'));
+    await _pumpUi(tester);
 
-    expect(rowCheckbox(1).value, isFalse);
-    expect(rowCheckbox(2).value, isTrue);
-    expect(find.textContaining('30 Event'), findsOneWidget);
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('select-all-slots-checkbox')),
+    expect(
+      find.text('Google カレンダーへの追加に失敗しました: Bad state: boom'),
+      findsWidgets,
     );
-    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
-    await tester.pumpAndSettle();
-
-    expect(rowCheckbox(1).value, isTrue);
-    expect(find.textContaining('31 Event'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('select-all-slots-checkbox')));
-    await tester.pumpAndSettle();
-
-    expect(rowCheckbox(1).value, isFalse);
-    expect(find.text('0 Events Selected'), findsOneWidget);
+    expect(find.byType(SnackBar), findsOneWidget);
   });
+}
 
-  testWidgets('shows warnings for partial merchandise sample', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          timetableImagePickerServiceProvider.overrideWith(
-            (ref) => TimetableImagePickerService(
-              pickImage: () async => SelectedTimetableImage(
-                bytes: _validImageBytes(),
-                name: 'partial.png',
-              ),
-            ),
+Future<void> _pumpTimetableScanScreen(
+  WidgetTester tester, {
+  List<Override> overrides = const [],
+}) async {
+  final prefs = await _createSharedPreferences();
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        core.sharedPreferencesProvider.overrideWithValue(prefs),
+        ...overrides,
+      ],
+      child: core.TranslationProvider(
+        child: app_i18n.TranslationProvider(
+          child: const MaterialApp(
+            home: TimetableScanScreen(),
           ),
-          timetableOcrServiceProvider.overrideWith(
-            (ref) => TimetableOcrService(
-              recognizeImage:
-                  ({
-                    required imageBytes,
-                    required imageName,
-                  }) async => _partialMerchandiseOcrResultFixture(),
-            ),
-          ),
-        ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
         ),
       ),
-    );
-    await tester.pumpAndSettle();
+    ),
+  );
+}
 
-    await tester.tap(find.text('Browse Files'));
-    await tester.pumpAndSettle();
+Future<SharedPreferences> _createSharedPreferences() async {
+  SharedPreferences.setMockInitialValues(<String, Object>{});
+  return SharedPreferences.getInstance();
+}
 
-    expect(find.text('Needs review'), findsOneWidget);
-    expect(find.text('2 件の特典会時間を取得できませんでした。'), findsOneWidget);
-    expect(find.text('N/A'), findsNWidgets(2));
-  });
-
-  testWidgets('shows error status for simulated OCR failure', (tester) async {
-    final originalOnError = FlutterError.onError;
-    FlutterError.onError = (details) {};
-    addTearDown(() {
-      FlutterError.onError = originalOnError;
-    });
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          timetableImagePickerServiceProvider.overrideWith(
-            (ref) => TimetableImagePickerService(
-              pickImage: () async => SelectedTimetableImage(
-                bytes: _validImageBytes(),
-                name: 'failure.png',
-              ),
-            ),
-          ),
-          timetableOcrServiceProvider.overrideWith(
-            (ref) => TimetableOcrService(
-              recognizeImage:
-                  ({
-                    required imageBytes,
-                    required imageName,
-                  }) async => throw StateError(
-                    'Failed to initialize the OCR engine.',
-                  ),
-            ),
-          ),
-        ],
-        child: const MaterialApp(
-          home: TimetableScanScreen(),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Browse Files'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('OCR failed:'), findsOneWidget);
-  });
+Future<void> _pumpUi(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
 }
 
 NdlocrResult _ocrResultFixture() {

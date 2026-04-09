@@ -1,4 +1,5 @@
 import 'package:app/core/gen/slang.g.dart';
+import 'package:app/domain/models/google_calendar_summary.dart';
 import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_scan_result.dart';
 import 'package:app/presentation/helpers/timetable_formatters.dart';
@@ -11,9 +12,14 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
   const TimetableScanPerformanceListCard({
     required this.scanResult,
     required this.selectedSlotIndices,
+    required this.eventTitle,
     required this.onToggleSlot,
     required this.onSelectAllSlots,
     required this.onClearAllSlots,
+    required this.onAddSelectedToGoogleCalendar,
+    required this.selectedCalendar,
+    required this.isLoadingCalendars,
+    required this.onSelectCalendar,
     super.key,
   });
 
@@ -23,6 +29,9 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
   /// Indices into [scanResult!.schedules] for selected rows.
   final Set<int> selectedSlotIndices;
 
+  /// Event title shown in the calendar summary line.
+  final String eventTitle;
+
   /// Toggles whether the schedule at the given index is selected.
   final void Function(int index, {required bool isSelected}) onToggleSlot;
 
@@ -31,6 +40,18 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
 
   /// Clears all parsed slots.
   final void Function() onClearAllSlots;
+
+  /// Adds selected rows to Google Calendar.
+  final Future<void> Function() onAddSelectedToGoogleCalendar;
+
+  /// Currently selected Google Calendar.
+  final GoogleCalendarSummary? selectedCalendar;
+
+  /// Whether the calendar list is being loaded.
+  final bool isLoadingCalendars;
+
+  /// Opens the calendar selection UI.
+  final Future<void> Function() onSelectCalendar;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +142,14 @@ class TimetableScanPerformanceListCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: spacing.m),
-          _BottomActionBar(selectedCount: selectedCount),
+          _BottomActionBar(
+            selectedCount: selectedCount,
+            eventTitle: eventTitle,
+            onAddSelectedToGoogleCalendar: onAddSelectedToGoogleCalendar,
+            selectedCalendar: selectedCalendar,
+            isLoadingCalendars: isLoadingCalendars,
+            onSelectCalendar: onSelectCalendar,
+          ),
         ],
       ],
     );
@@ -329,9 +357,21 @@ class _InfoCell extends StatelessWidget {
 }
 
 class _BottomActionBar extends StatelessWidget {
-  const _BottomActionBar({required this.selectedCount});
+  const _BottomActionBar({
+    required this.selectedCount,
+    required this.eventTitle,
+    required this.onAddSelectedToGoogleCalendar,
+    required this.selectedCalendar,
+    required this.isLoadingCalendars,
+    required this.onSelectCalendar,
+  });
 
   final int selectedCount;
+  final String eventTitle;
+  final Future<void> Function() onAddSelectedToGoogleCalendar;
+  final GoogleCalendarSummary? selectedCalendar;
+  final bool isLoadingCalendars;
+  final Future<void> Function() onSelectCalendar;
 
   @override
   Widget build(BuildContext context) {
@@ -378,68 +418,135 @@ class _BottomActionBar extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  t.timetableScan.performanceList.addingToCalendar,
+                  t.timetableScan.performanceList.addingToCalendar(
+                    eventTitle: eventTitle,
+                  ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
                   textAlign: row ? TextAlign.start : TextAlign.center,
                 ),
-              ],
-            );
-            final button = DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: context.timetableScanPillRadius,
-                gradient: TimetableScanStitchTokens.primaryCtaGradient(scheme),
-                boxShadow: TimetableScanStitchTokens.ambientCardShadow(
-                  scheme.onSurface,
-                ),
-              ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  borderRadius: context.timetableScanPillRadius,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          context
-                              .t
-                              .timetableScan
-                              .performanceList
-                              .calendarIntegrationComingSoon,
-                        ),
-                      ),
-                    );
-                  },
+                SizedBox(height: spacing.m),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: context.timetableScanSectionRadius,
+                  ),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: spacing.l,
-                      vertical: spacing.m,
-                    ),
+                    padding: EdgeInsets.all(spacing.s),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.calendar_month_rounded,
-                          color: scheme.onPrimary,
+                          Icons.event_available_rounded,
+                          color: scheme.primary,
+                          size: 18,
                         ),
-                        const SizedBox(width: 10),
-                        Flexible(
+                        SizedBox(width: spacing.s),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t
+                                    .timetableScan
+                                    .performanceList
+                                    .calendarDestinationLabel,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: spacing.xs),
+                              Text(
+                                isLoadingCalendars
+                                    ? t
+                                          .timetableScan
+                                          .performanceList
+                                          .loadingCalendars
+                                    : selectedCalendar?.summary ??
+                                          t
+                                              .timetableScan
+                                              .performanceList
+                                              .defaultCalendar,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: scheme.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: spacing.s),
+                        TextButton(
+                          onPressed: isLoadingCalendars
+                              ? null
+                              : () async {
+                                  await onSelectCalendar();
+                                },
                           child: Text(
-                            context
-                                .t
-                                .timetableScan
-                                .performanceList
-                                .addSelectedToGoogleCalendar,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: scheme.onPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            textAlign: TextAlign.center,
+                            t.timetableScan.performanceList.changeCalendar,
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+            final buttonEnabled = selectedCount > 0;
+            final button = Opacity(
+              opacity: buttonEnabled ? 1 : 0.45,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: context.timetableScanPillRadius,
+                  gradient: TimetableScanStitchTokens.primaryCtaGradient(
+                    scheme,
+                  ),
+                  boxShadow: TimetableScanStitchTokens.ambientCardShadow(
+                    scheme.onSurface,
+                  ),
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    borderRadius: context.timetableScanPillRadius,
+                    onTap: buttonEnabled
+                        ? () async {
+                            await onAddSelectedToGoogleCalendar();
+                          }
+                        : null,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: spacing.l,
+                        vertical: spacing.m,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            color: scheme.onPrimary,
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              context
+                                  .t
+                                  .timetableScan
+                                  .performanceList
+                                  .addSelectedToGoogleCalendar,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: scheme.onPrimary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

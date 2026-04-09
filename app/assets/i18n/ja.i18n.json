@@ -29,9 +29,19 @@
       "editingComingSoon": "編集機能は近日公開予定です。",
       "selectedOne": "1 件のイベントを選択中",
       "selectedMany": "{count} 件のイベントを選択中",
-      "addingToCalendar": "\"Summer Festival 2024\" のカレンダーに追加中",
+      "addingToCalendar": "\"{eventTitle}\" のカレンダーに追加",
       "addSelectedToGoogleCalendar": "選択したイベントを Google カレンダーに追加",
-      "calendarIntegrationComingSoon": "Google カレンダー連携は次のリリースで対応予定です。"
+      "calendarIntegrationComingSoon": "Google カレンダー連携は次のリリースで対応予定です。",
+      "calendarClientNotConfigured": "Google Calendar のクライアント ID が設定されていません。",
+      "calendarSyncSucceeded": "選択した {count} 件を Google カレンダーに追加しました。",
+      "calendarSyncFailed": "Google カレンダーへの追加に失敗しました: {error}",
+      "calendarListFailed": "Google カレンダー一覧の取得に失敗しました: {error}",
+      "calendarDestinationLabel": "追加先カレンダー",
+      "changeCalendar": "変更",
+      "loadingCalendars": "カレンダーを読み込み中…",
+      "defaultCalendar": "メインカレンダー",
+      "calendarSelectionTitle": "追加先カレンダーを選択",
+      "noWritableCalendars": "追加可能な Google カレンダーが見つかりませんでした。"
     },
     "hero": {
       "selectedImagePreview": "選択した画像のプレビュー",
