@@ -75,6 +75,10 @@ class TimetableScanScreen extends ConsumerWidget {
           },
           onSelectAllSlots: notifier.selectAllSlots,
           onClearAllSlots: notifier.clearAllSlots,
+          onEditSchedule: (index, schedule) => notifier.updateSchedule(
+            index: index,
+            schedule: schedule,
+          ),
           onAddSelectedToGoogleCalendar: notifier.addSelectedToGoogleCalendar,
           selectedCalendar: scanState.selectedCalendar,
           isLoadingCalendars: scanState.isLoadingCalendars,
@@ -97,6 +101,10 @@ class TimetableScanScreen extends ConsumerWidget {
           },
           onSelectAllSlots: notifier.selectAllSlots,
           onClearAllSlots: notifier.clearAllSlots,
+          onEditSchedule: (index, schedule) => notifier.updateSchedule(
+            index: index,
+            schedule: schedule,
+          ),
           onAddSelectedToGoogleCalendar: notifier.addSelectedToGoogleCalendar,
           selectedCalendar: scanState.selectedCalendar,
           isLoadingCalendars: scanState.isLoadingCalendars,

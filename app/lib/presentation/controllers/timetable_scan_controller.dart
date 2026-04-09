@@ -185,6 +185,26 @@ class TimetableScanController extends _$TimetableScanController {
     state = state.copyWith(selectedSlotIndices: const <int>{});
   }
 
+  /// Replaces the schedule row at [index] with [schedule].
+  void updateSchedule({
+    required int index,
+    required TimetableArtistSchedule schedule,
+  }) {
+    final result = state.scanResult;
+    if (result == null || index < 0 || index >= result.schedules.length) {
+      return;
+    }
+
+    final schedules = [...result.schedules];
+    schedules[index] = schedule;
+    state = state.copyWith(
+      scanResult: result.copyWith(schedules: schedules),
+      statusMessage: _statusMessageFor(
+        result.copyWith(schedules: schedules),
+      ),
+    );
+  }
+
   /// Adds the selected timetable rows to Google Calendar.
   Future<void> addSelectedToGoogleCalendar() async {
     final result = state.scanResult;
