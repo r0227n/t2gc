@@ -317,6 +317,65 @@ No. ライブ時間 出演者 物販枠 物販時間
       );
     });
 
+    test('removes configured exclusion words from artist names', () {
+      const parser = SupportedTimetableParser(
+        excludedArtistWords: <String>['物販'],
+      );
+      const result = NdlocrResult(
+        text:
+            'アイドル甲子園 in KANDA SQUARE HALL\n'
+            '2026.03.21 OPEN 10:30 START 11:00\n'
+            '1 11:00~11:20 KOURIN 物販 A 11:30~12:30\n',
+        imageSize: NdlocrImageSize(width: 1368, height: 1782),
+        lines: <NdlocrLine>[
+          NdlocrLine(
+            order: 0,
+            text: 'アイドル甲子園 in KANDA SQUARE HALL',
+            boundingBox: NdlocrBoundingBox(
+              x: 80,
+              y: 80,
+              width: 900,
+              height: 80,
+            ),
+            type: 'line',
+            confidence: 0.99,
+            isVertical: false,
+          ),
+          NdlocrLine(
+            order: 1,
+            text: '2026.03.21 OPEN 10:30 START 11:00',
+            boundingBox: NdlocrBoundingBox(
+              x: 80,
+              y: 180,
+              width: 900,
+              height: 60,
+            ),
+            type: 'line',
+            confidence: 0.99,
+            isVertical: false,
+          ),
+          NdlocrLine(
+            order: 2,
+            text: '1 11:00~11:20 KOURIN 物販 A 11:30~12:30',
+            boundingBox: NdlocrBoundingBox(
+              x: 120,
+              y: 500,
+              width: 900,
+              height: 60,
+            ),
+            type: 'line',
+            confidence: 0.99,
+            isVertical: false,
+          ),
+        ],
+      );
+
+      final parsed = parser.parse(result);
+
+      expect(parsed.performances.single.artistName, 'KOURIN');
+      expect(parsed.merchandiseSlots.single.artistName, 'KOURIN');
+    });
+
     test('adds warnings when merchandise times are missing', () {
       final parsed = parser.parse(_partialMerchandiseOcrResultFixture());
 

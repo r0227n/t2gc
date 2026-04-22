@@ -19,7 +19,12 @@ SupportedTimetableParser supportedTimetableParser(Ref ref) {
 /// Parser tuned to the first-launch timetable layout shown in the spec image.
 class SupportedTimetableParser {
   /// Creates a parser for the supported timetable format.
-  const SupportedTimetableParser();
+  const SupportedTimetableParser({
+    this.excludedArtistWords = const <String>[],
+  });
+
+  /// Words removed from OCR artist names before they are assigned.
+  final List<String> excludedArtistWords;
 
   static final RegExp _datePattern = RegExp(
     r'(?<year>\d{4})[./](?<month>\d{2})[./](?<day>\d{2})',
@@ -415,11 +420,28 @@ class SupportedTimetableParser {
   }
 
   String _cleanArtistName(String value) {
-    return value
+    final cleaned = value
         .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAll(RegExp(r'^[\d\s.・|]+'), '')
         .replaceAll(RegExp(r'\s+[A-D-]$'), '')
         .trim();
+    return _removeExcludedWords(cleaned);
+  }
+
+  String _removeExcludedWords(String value) {
+    var normalized = value;
+    final exclusions =
+        excludedArtistWords
+            .map((word) => word.replaceAll(RegExp(r'\s+'), ' ').trim())
+            .where((word) => word.isNotEmpty)
+            .toList()
+          ..sort((left, right) => right.length.compareTo(left.length));
+
+    for (final word in exclusions) {
+      normalized = normalized.replaceAll(word, ' ');
+    }
+
+    return normalized.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   (DateTime, DateTime)? _extractAfterShowWindow({

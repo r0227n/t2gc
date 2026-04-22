@@ -19,12 +19,31 @@ final packageInfoProvider = FutureProvider<PackageInfo>(
 );
 
 /// Application settings screen.
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   /// Creates the settings screen.
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late final TextEditingController _artistNameExclusionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _artistNameExclusionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _artistNameExclusionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final translations = _appTranslations(context);
     final theme = Theme.of(context);
     final spacing = context.appSpacing;
@@ -72,6 +91,24 @@ class SettingsScreen extends ConsumerWidget {
                       onLocaleChanged: _handleLocaleChanged,
                     );
                   },
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: EdgeInsets.all(spacing.l),
+                  child: _ArtistNameExclusionSettingBlock(
+                    controller: _artistNameExclusionController,
+                    words: settingsState.artistNameExclusionWords,
+                    onAdd: () {
+                      unawaited(_handleAddArtistNameExclusionWord());
+                    },
+                    onRemove: (word) {
+                      unawaited(
+                        ref
+                            .read(settingsControllerProvider.notifier)
+                            .removeArtistNameExclusionWord(word),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -227,6 +264,18 @@ class SettingsScreen extends ConsumerWidget {
     await app_i18n.LocaleSettings.setLocale(nextLocale);
   }
 
+  Future<void> _handleAddArtistNameExclusionWord() async {
+    final word = _artistNameExclusionController.text.trim();
+    if (word.isEmpty) {
+      return;
+    }
+
+    await ref
+        .read(settingsControllerProvider.notifier)
+        .addArtistNameExclusionWord(word);
+    _artistNameExclusionController.clear();
+  }
+
   String _localeLabel({
     required app_i18n.Translations translations,
     required Locale locale,
@@ -335,6 +384,101 @@ class SettingsScreen extends ConsumerWidget {
     }
 
     return translations.settings.calendarLoadFailed(message: message);
+  }
+}
+
+class _ArtistNameExclusionSettingBlock extends StatelessWidget {
+  const _ArtistNameExclusionSettingBlock({
+    required this.controller,
+    required this.words,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final TextEditingController controller;
+  final List<String> words;
+  final VoidCallback onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final spacing = context.appSpacing;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(Icons.text_fields_rounded),
+            ),
+            SizedBox(width: spacing.m),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'OCR除外ワード',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: spacing.xs),
+                  Text(
+                    'OCR結果をアーティスト名に入れる前に削除するワードです。',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  SizedBox(height: spacing.s),
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: '除外ワードを追加',
+                      hintText: '例: 物販',
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => onAdd(),
+                  ),
+                  SizedBox(height: spacing.s),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: onAdd,
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('追加'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: spacing.m),
+        if (words.isEmpty)
+          Text(
+            '登録済みの除外ワードはありません。',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          )
+        else
+          Wrap(
+            spacing: spacing.s,
+            runSpacing: spacing.s,
+            children: [
+              for (final word in words)
+                InputChip(
+                  label: Text(word),
+                  onDeleted: () => onRemove(word),
+                ),
+            ],
+          ),
+      ],
+    );
   }
 }
 

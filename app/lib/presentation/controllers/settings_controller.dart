@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app/data/repositories/artist_name_exclusion_repository.dart';
 import 'package:app/data/repositories/google_calendar_selection_repository.dart';
 import 'package:app/data/services/google_calendar_service.dart';
 import 'package:app/domain/models/google_calendar_summary.dart';
@@ -21,6 +22,7 @@ class SettingsState {
     this.account,
     this.calendars = const <GoogleCalendarSummary>[],
     this.selectedCalendar,
+    this.artistNameExclusionWords = const <String>[],
     this.errorMessage,
     this.isInitializing = true,
     this.isBusy = false,
@@ -35,6 +37,9 @@ class SettingsState {
 
   /// The selected destination calendar.
   final GoogleCalendarSummary? selectedCalendar;
+
+  /// Words removed from OCR artist names before assignment.
+  final List<String> artistNameExclusionWords;
 
   /// Human-readable error text for the settings screen.
   final String? errorMessage;
@@ -59,6 +64,7 @@ class SettingsState {
     GoogleSignInAccount? account,
     List<GoogleCalendarSummary>? calendars,
     GoogleCalendarSummary? selectedCalendar,
+    List<String>? artistNameExclusionWords,
     String? errorMessage,
     bool clearSelectedCalendar = false,
     bool clearErrorMessage = false,
@@ -72,6 +78,8 @@ class SettingsState {
       selectedCalendar: clearSelectedCalendar
           ? null
           : selectedCalendar ?? this.selectedCalendar,
+      artistNameExclusionWords:
+          artistNameExclusionWords ?? this.artistNameExclusionWords,
       errorMessage: clearErrorMessage
           ? null
           : errorMessage ?? this.errorMessage,
@@ -86,6 +94,7 @@ class SettingsState {
 class SettingsController extends Notifier<SettingsState> {
   late final GoogleCalendarService _calendarService;
   late final GoogleCalendarSelectionRepository _selectionRepository;
+  late final ArtistNameExclusionRepository _artistNameExclusionRepository;
 
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
   var _didKickoffInitialization = false;
@@ -94,6 +103,9 @@ class SettingsController extends Notifier<SettingsState> {
   SettingsState build() {
     _calendarService = ref.watch(googleCalendarServiceProvider);
     _selectionRepository = ref.watch(googleCalendarSelectionRepositoryProvider);
+    _artistNameExclusionRepository = ref.watch(
+      artistNameExclusionRepositoryProvider,
+    );
 
     ref.onDispose(() {
       unawaited(_authSubscription?.cancel());
@@ -105,8 +117,34 @@ class SettingsController extends Notifier<SettingsState> {
     }
 
     return SettingsState(
+      artistNameExclusionWords: _artistNameExclusionRepository
+          .getExcludedWords(),
       selectedCalendar: _selectionRepository.getSelectedCalendar(),
     );
+  }
+
+  /// Stores a new OCR exclusion word.
+  Future<void> addArtistNameExclusionWord(String word) async {
+    final normalized = word.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    final nextWords = {
+      ...state.artistNameExclusionWords,
+      normalized,
+    }.toList()..sort();
+    await _artistNameExclusionRepository.setExcludedWords(nextWords);
+    state = state.copyWith(artistNameExclusionWords: nextWords);
+  }
+
+  /// Removes an OCR exclusion word.
+  Future<void> removeArtistNameExclusionWord(String word) async {
+    final nextWords = state.artistNameExclusionWords
+        .where((candidate) => candidate != word)
+        .toList(growable: false);
+    await _artistNameExclusionRepository.setExcludedWords(nextWords);
+    state = state.copyWith(artistNameExclusionWords: nextWords);
   }
 
   /// Starts an interactive Google OAuth sign-in flow.

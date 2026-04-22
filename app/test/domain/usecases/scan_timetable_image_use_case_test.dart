@@ -39,7 +39,7 @@ void main() {
                 required imageName,
               }) async => _ocrResultFixture(),
         ),
-        parseResult: (result) async {
+        parseResult: (result, _) async {
           parseCalls++;
           return const SupportedTimetableParser().parse(result);
         },
@@ -52,6 +52,31 @@ void main() {
 
       expect(parseCalls, 1);
       expect(result.performances.single.artistName, 'Alice');
+    });
+
+    test('passes exclusion words into the parser pathway', () async {
+      final useCase = ScanTimetableImageUseCase(
+        ocrService: TimetableOcrService(
+          recognizeImage:
+              ({
+                required imageBytes,
+                required imageName,
+              }) async => _ocrResultFixture(),
+        ),
+        getExcludedArtistWords: () => const <String>['lice'],
+        parseResult: (result, excludedArtistWords) async {
+          return SupportedTimetableParser(
+            excludedArtistWords: excludedArtistWords,
+          ).parse(result);
+        },
+      );
+
+      final result = await useCase(
+        imageBytes: Uint8List.fromList(<int>[1, 2, 3]),
+        imageName: 'fixture.png',
+      );
+
+      expect(result.performances.single.artistName, 'A');
     });
   });
 }

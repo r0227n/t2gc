@@ -1,3 +1,4 @@
+import 'package:app/data/repositories/artist_name_exclusion_repository.dart';
 import 'package:app/data/services/timetable_ocr_service.dart';
 import 'package:app/domain/models/timetable_artist_schedule.dart';
 import 'package:app/domain/models/timetable_merchandise_slot.dart';
@@ -16,6 +17,9 @@ part 'scan_timetable_image_use_case.g.dart';
 ScanTimetableImageUseCase scanTimetableImageUseCase(Ref ref) {
   return ScanTimetableImageUseCase(
     ocrService: ref.watch(timetableOcrServiceProvider),
+    getExcludedArtistWords: ref
+        .watch(artistNameExclusionRepositoryProvider)
+        .getExcludedWords,
   );
 }
 
@@ -24,20 +28,35 @@ class ScanTimetableImageUseCase {
   /// Creates a timetable scanning use case.
   ScanTimetableImageUseCase({
     required TimetableOcrService ocrService,
-    Future<TimetableScanResult> Function(NdlocrResult result)? parseResult,
+    List<String> Function()? getExcludedArtistWords,
+    Future<TimetableScanResult> Function(
+      NdlocrResult result,
+      List<String> excludedArtistWords,
+    )?
+    parseResult,
   }) : _ocrService = ocrService,
+       _getExcludedArtistWords =
+           getExcludedArtistWords ?? (() => const <String>[]),
        _parseResult =
            parseResult ??
-           ((result) async {
+           ((result, excludedArtistWords) async {
              final parsedJson = await compute(
                _parseTimetableScanResult,
-               result.toJson(),
+               <String, Object?>{
+                 'result': result.toJson(),
+                 'excludedArtistWords': excludedArtistWords,
+               },
              );
              return _timetableScanResultFromJson(parsedJson);
            });
 
   final TimetableOcrService _ocrService;
-  final Future<TimetableScanResult> Function(NdlocrResult result) _parseResult;
+  final List<String> Function() _getExcludedArtistWords;
+  final Future<TimetableScanResult> Function(
+    NdlocrResult result,
+    List<String> excludedArtistWords,
+  )
+  _parseResult;
 
   /// Scans the provided image and returns the parsed timetable.
   Future<TimetableScanResult> call({
@@ -48,14 +67,24 @@ class ScanTimetableImageUseCase {
       imageBytes: imageBytes,
       imageName: imageName,
     );
-    return _parseResult(ocrResult);
+    return _parseResult(ocrResult, _getExcludedArtistWords());
   }
 
   static Map<String, dynamic> _parseTimetableScanResult(
     Map<String, dynamic> json,
   ) {
-    const parser = SupportedTimetableParser();
-    final parsed = parser.parse(_ndlocrResultFromJson(json));
+    final excludedArtistWords =
+        (json['excludedArtistWords'] as List<Object?>? ?? const <Object?>[])
+            .whereType<String>()
+            .toList(growable: false);
+    final parser = SupportedTimetableParser(
+      excludedArtistWords: excludedArtistWords,
+    );
+    final parsed = parser.parse(
+      _ndlocrResultFromJson(
+        json['result'] as Map<String, dynamic>? ?? const <String, dynamic>{},
+      ),
+    );
     return _timetableScanResultToJson(parsed);
   }
 
